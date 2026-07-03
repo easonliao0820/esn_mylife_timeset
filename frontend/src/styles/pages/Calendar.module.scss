@@ -1,0 +1,386 @@
+@use "sass:color";
+@use '../variables' as v;
+
+.calendarLayout {
+  display: flex;
+  gap: 1.2rem;
+  position: relative;
+  min-height: calc(100vh - 120px);
+  padding: 0.5rem;
+  overflow-x: hidden;
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+    height: auto;
+  }
+}
+
+.calendarMain {
+  flex: 1;
+  min-width: 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.calendarSidebar {
+  width: 140px;
+  flex-shrink: 0;
+
+  h3 {
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    color: v.$dark-text;
+    font-weight: 700;
+  }
+
+  .statsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .statItem {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.2);
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .statInfo {
+      label {
+        display: block;
+        font-size: 0.6rem;
+        color: v.$text-secondary;
+      }
+      p {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: v.$dark-text;
+      }
+    }
+  }
+
+  .tipsBox {
+    background: rgba(226, 232, 176, 0.25);
+    padding: 0.8rem;
+    border-radius: 10px;
+    border-left: 3px solid v.$leaf-yellow;
+    
+    p {
+      font-size: 0.65rem;
+      line-height: 1.4;
+      color: v.$dark-text;
+    }
+  }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+
+  .monthTitle {
+    h2 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: v.$dark-text;
+    }
+    p {
+      font-size: 0.65rem;
+      color: v.$text-secondary;
+    }
+  }
+
+  .nav {
+    display: flex;
+    gap: 0.3rem;
+    
+    button {
+      background: white;
+      border: 1px solid v.$glass-border;
+      color: v.$dark-text;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: v.$primary;
+        color: white;
+      }
+    }
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.dayHeader {
+  padding: 5px;
+  text-align: center;
+  font-weight: 700;
+  color: v.$accent;
+  font-size: 0.65rem;
+  opacity: 0.7;
+}
+
+.dayCell {
+  @include v.glassmorphism;
+  background: rgba(255, 255, 255, 0.3);
+  min-height: 85px;
+  padding: 6px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  border-radius: 10px;
+
+  &:hover {
+    background: white;
+    transform: translateY(-1px);
+  }
+
+  &.today {
+    background: rgba(23, 184, 144, 0.08);
+    border: 2px solid v.$primary;
+    .dateNum { color: v.$primary; }
+  }
+
+  &.selected {
+    background: rgba(23, 184, 144, 0.12);
+    border: 2px solid v.$primary;
+  }
+
+  &.otherMonth { opacity: 0.15; }
+
+  .dateNum {
+    font-weight: 700;
+    margin-bottom: 4px;
+    font-size: 0.8rem;
+  }
+
+  .taskLabels {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    
+    .miniTask {
+      font-size: 0.55rem;
+      padding: 1px 4px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.5);
+      color: v.$accent;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border-left: 2px solid v.$secondary;
+    }
+
+    .moreCount {
+      font-size: 0.55rem;
+      color: v.$primary;
+      font-weight: 700;
+      text-align: right;
+    }
+  }
+}
+
+/* 里程碑任務標籤（日格小標） */
+.miniTaskMilestone {
+  background: rgba(255, 183, 77, 0.3) !important;
+  border-left-color: #ffb74d !important;
+  color: #7c4a00 !important;
+  font-weight: 700 !important;
+}
+
+/* 抽屜樣式 */
+.drawer {
+  position: absolute;
+  top: 0;
+  right: -300px;
+  width: 300px;
+  height: 100%;
+  background: white;
+  border-radius: 15px;
+  z-index: 200;
+  transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid v.$glass-border;
+
+  &.open { right: 0; }
+
+  .drawerHeader {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid v.$glass-border;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .drawerTitleArea {
+      h3 { margin: 0; font-size: 1rem; font-weight: 700; color: v.$dark-text; }
+    }
+
+    .closeBtn {
+      background: none; border: none; font-size: 1.5rem; cursor: pointer; color: v.$accent;
+    }
+  }
+
+  .drawerContent {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .drawerAddBtn {
+    align-self: flex-end;
+    margin: 0.6rem 1rem 0;
+    padding: 0.25rem 0.7rem;
+    background: rgba(23, 184, 144, 0.1);
+    border: 1px solid v.$primary;
+    border-radius: 6px;
+    color: v.$primary;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: v.$primary;
+      color: white;
+    }
+  }
+
+  .vTimelineWrapper { margin-top: 0.8rem; padding-left: 35px; position: relative; }
+  .vTimelineTrack { position: relative; border-left: 2px solid v.$glass-border; }
+  .vHourSlot {
+    height: 35px; position: relative; border-top: 1px dashed rgba(0, 0, 0, 0.03);
+    .vHourLabel { position: absolute; left: -35px; top: -8px; font-size: 0.55rem; color: v.$text-secondary; }
+  }
+  
+  /* 垂直任務色塊樣式 */
+  .vTaskBlock {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    border-radius: 6px;
+    padding: 0 10px; /* 移除上下 Padding，改用垂直居中 */
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-left: 4px solid transparent;
+    opacity: 0.7; /* 預設半透明 */
+
+    .vTaskInner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+
+      h4 { 
+        font-size: 0.75rem; 
+        margin: 0; 
+        color: v.$dark-text; 
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+      }
+      
+      span { 
+        font-size: 0.6rem; 
+        color: v.$text-secondary;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .editTaskBtn {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        font-size: 0.8rem;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+        margin-left: 4px;
+
+        &:hover {
+          background: v.$primary;
+          transform: scale(1.1);
+        }
+      }
+
+      .deleteTaskBtn {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        font-size: 0.8rem;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+        margin-left: 4px;
+
+        &:hover {
+          background: #ff4757;
+          color: white;
+          transform: scale(1.1);
+        }
+      }
+    }
+
+    /* 分類色彩 - 預設淺色 */
+    &.important { background: rgba(226, 232, 176, 0.4); border-left-color: v.$leaf-yellow; }
+    &.relax { background: rgba(160, 210, 235, 0.4); border-left-color: v.$lake-blue; }
+    &.personal { background: rgba(124, 106, 83, 0.2); border-left-color: v.$earth-brown; }
+    &.work { background: rgba(23, 184, 144, 0.2); border-left-color: v.$primary; }
+    &.milestone { background: rgba(255, 183, 77, 0.25); border-left-color: #ffb74d; }
+
+    /* 選中狀態 - 變不透明、置頂、並加上跳色光暈 */
+    &.vActive {
+      opacity: 1 !important;
+      transform: scale(1.02);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      
+      &.important { background: v.$leaf-yellow; box-shadow: 0 0 12px v.$leaf-yellow; }
+      &.relax { background: v.$lake-blue; box-shadow: 0 0 12px v.$lake-blue; }
+      &.personal { background: v.$earth-brown; color: white; h4, span { color: white; } }
+      &.work { background: v.$primary; box-shadow: 0 0 12px v.$primary; color: white; h4, span { color: white; } }
+      &.milestone { background: #ffb74d; box-shadow: 0 0 12px rgba(255,183,77,0.6); color: #5c3300; h4, span { color: #5c3300; } }
+    }
+
+    &:hover { opacity: 0.9; }
+    &.completed { 
+      opacity: 0.3 !important; /* 更大幅度的淡化 */
+      filter: grayscale(0.5); /* 稍微降飽和度 */
+    }
+  }
+}

@@ -1,0 +1,146 @@
+@use "sass:color";
+@use '../variables' as v;
+
+.timelinePage {
+  display: flex;
+  height: auto;
+  min-height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+  border: 1px solid v.$glass-border;
+  
+  .sidebar {
+    width: 120px;
+    flex-shrink: 0;
+    background: v.$bg-light;
+    border-right: 1px solid v.$glass-border;
+    display: flex;
+    flex-direction: column;
+    padding-top: 36px; /* 對齊時間標頭的高度 */
+    z-index: 20;
+
+    .rowTitle {
+      height: 32px;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      font-size: 0.7rem;
+      color: v.$dark-text;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .scrollArea {
+    flex-grow: 1;
+    overflow-x: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+
+    .horizontalContent {
+      min-width: 1000px;
+      position: relative;
+    }
+  }
+
+  .timeHeader {
+    display: flex;
+    height: 36px;
+    background: v.$secondary;
+    border-bottom: 1px solid v.$glass-border;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+
+    .hourLabel {
+      width: 100px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      color: v.$dark-text;
+      font-weight: 600;
+      border-right: 1px dashed rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  .timelineTrack {
+    position: relative;
+    height: 100%;
+    background: rgba(157, 197, 187, 0.05);
+    
+    .gridLine {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      border-left: 1px dashed rgba(0, 0, 0, 0.05);
+      z-index: 1;
+    }
+  }
+
+  .taskBar {
+    position: absolute;
+    height: 22px;
+    background: rgba(23, 184, 144, 0.15);
+    border-left: 3px solid v.$primary;
+    border-radius: 4px;
+    padding: 2px 6px;
+    z-index: 5;
+    overflow: hidden;
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    border: 1px solid rgba(23, 184, 144, 0.1);
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(23, 184, 144, 0.25);
+      transform: translateX(2px);
+      z-index: 10;
+    }
+
+    .taskTitle {
+      font-size: 0.7rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: v.$dark-text;
+      font-weight: 500;
+    }
+
+    &.completed {
+      background: rgba(157, 197, 187, 0.2);
+      border-left-color: v.$accent;
+    }
+  }
+
+  .currentTimeLine {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #ff4757;
+    z-index: 15;
+    pointer-events: none;
+    box-shadow: 0 0 10px rgba(255, 71, 87, 0.3);
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 10px;
+      background: #ff4757;
+      border-radius: 50%;
+      box-shadow: 0 0 5px rgba(255, 71, 87, 0.5);
+    }
+  }
+}

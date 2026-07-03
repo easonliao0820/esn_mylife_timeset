@@ -1,0 +1,183 @@
+@use "sass:color";
+@use '../variables' as v;
+
+.tableHeader {
+  margin-bottom: 2rem;
+}
+
+.singleLineHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+
+  .leftSide {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    h2 {
+      margin: 0;
+      color: v.$dark-text;
+      letter-spacing: -0.5px;
+    }
+  }
+
+  .weekBadge {
+    padding: 6px 16px;
+    background: v.$moss-green;
+    color: white;
+    border-radius: 99px;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  /* 新增按鈕樣式 */
+  .addBtn {
+    background: v.$primary;
+    color: white;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(23, 184, 144, 0.2);
+
+    &:hover {
+      background: color.adjust(v.$primary, $lightness: -5%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(23, 184, 144, 0.3);
+    }
+  }
+}
+
+.rightSide {
+  .dateInputGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid v.$glass-border;
+    border-radius: 10px;
+
+    .inputLabel { font-size: 0.75rem; font-weight: 700; color: v.$text-secondary; }
+    .separator { color: v.$text-secondary; font-weight: 700; }
+    input {
+      background: transparent; border: none; font-size: 0.85rem; color: v.$dark-text; outline: none;
+    }
+  }
+}
+
+.timetableContainer {
+  padding: 0 !important;
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.timetableWrapper {
+  display: flex;
+  background: rgba(255, 255, 255, 0.2);
+  min-width: 700px;
+}
+
+.timeColumn {
+  width: 60px;
+  flex-shrink: 0;
+  border-right: 1px solid v.$glass-border;
+  background: rgba(255, 255, 255, 0.3);
+  .cornerLabel {
+    height: 40px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; color: v.$accent; border-bottom: 1px solid v.$glass-border;
+  }
+  .hourSlot {
+    height: 40px; display: flex; justify-content: center; padding-top: 5px; font-size: 0.65rem; color: v.$text-secondary;
+  }
+}
+
+.gridContainer { flex: 1; display: flex; flex-direction: column; }
+.gridHeader {
+  display: grid; grid-template-columns: repeat(5, 1fr); height: 40px; border-bottom: 1px solid v.$glass-border; background: rgba(255, 255, 255, 0.3);
+  .dayLabel {
+    display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: v.$dark-text;
+    &.today { background: v.$primary-glow; color: v.$primary; position: relative; &::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: v.$primary; } }
+  }
+}
+
+.gridBody { position: relative; flex: 1; }
+.gridRow {
+  display: grid; grid-template-columns: repeat(5, 1fr); height: 40px; border-bottom: 1px dashed rgba(0, 0, 0, 0.05);
+  .gridCell { border-right: 1px solid rgba(0, 0, 0, 0.02); &:last-child { border-right: none; } }
+}
+
+.courseCard {
+  position: absolute; border-radius: 6px; padding: 3px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; z-index: 5; border-left: 3px solid transparent;
+  &:hover { z-index: 10; transform: scale(1.02); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); .deleteBtn { opacity: 1; } }
+  .courseInner {
+    height: 100%; display: flex; flex-direction: column; justify-content: flex-start; padding: 3px 5px; overflow: hidden; position: relative;
+    .courseTime { font-size: 0.55rem; opacity: 0.8; }
+    h4 { font-size: 0.7rem; font-weight: 700; margin-bottom: 1px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .courseRoom { font-size: 0.6rem; opacity: 0.7; }
+    .deleteBtn {
+      position: absolute; right: 2px; top: 2px; background: transparent; border: none; cursor: pointer; font-size: 0.6rem; opacity: 0; color: v.$accent; transition: opacity 0.2s;
+    }
+  }
+  &.work { background: rgba(23, 184, 144, 0.12); border-left-color: v.$primary; color: color.adjust(v.$primary, $lightness: -20%); }
+  &.important { background: rgba(226, 232, 176, 0.25); border-left-color: v.$leaf-yellow; color: color.adjust(v.$leaf-yellow, $lightness: -45%); }
+  &.relax { background: rgba(160, 210, 235, 0.2); border-left-color: v.$lake-blue; color: color.adjust(v.$lake-blue, $lightness: -30%); }
+  &.personal { background: rgba(124, 106, 83, 0.1); border-left-color: v.$earth-brown; color: v.$earth-brown; }
+}
+
+/* Modal 樣式 */
+.modalOverlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(26, 60, 52, 0.4); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.3s ease;
+}
+
+.modalContent {
+  @include v.glassmorphism;
+  background: white;
+  width: 90%;
+  max-width: 450px;
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+
+  h3 { margin-top: 0; margin-bottom: 1.5rem; color: v.$dark-text; font-size: 1.2rem; text-align: center; font-weight: 800; }
+
+  .formGroup {
+    margin-bottom: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    label { font-size: 0.8rem; font-weight: 700; color: v.$text-secondary; }
+    input, select {
+      padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(0, 0, 0, 0.08); font-size: 0.9rem; outline: none; transition: border-color 0.3s;
+      &:focus { border-color: v.$primary; }
+    }
+  }
+
+  .formRow { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+  .modalActions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+
+    button { flex: 1; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.3s; font-size: 0.85rem; }
+    .cancelBtn { background: v.$bg-light; border: none; color: v.$accent; &:hover { background: #e2e8f0; } }
+    .deleteBtnInModal { 
+      background: rgba(184, 82, 82, 0.1); 
+      border: 1px solid rgba(184, 82, 82, 0.2); 
+      color: #b85252;
+      &:hover { background: rgba(184, 82, 82, 0.2); }
+    }
+    .submitBtn { background: v.$primary; border: none; color: white; box-shadow: 0 4px 12px rgba(23, 184, 144, 0.3); &:hover { transform: translateY(-2px); } }
+  }
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }

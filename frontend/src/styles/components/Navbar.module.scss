@@ -1,0 +1,71 @@
+@use "sass:color";
+@use '../variables' as v;
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 5%;
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.7);
+  /* 改為淺色透明 */
+  border-bottom: 1px solid v.$glass-border;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  .logo {
+    width: 20vw;
+    font-size: 1.1rem;
+    font-weight: 700;
+    background: linear-gradient(to right, v.$primary, v.$accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .navLinks {
+    width: 40vw;
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+
+    a {
+      color: v.$secondary;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.85rem;
+      transition: color 0.3s ease;
+
+      &:hover {
+        color: v.$primary;
+      }
+    }
+  }
+
+  .buttonArea {
+    width: 20vw;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1.5rem;
+
+    .ctaButton {
+      background: v.$primary;
+      color: white;
+      padding: 0.4rem 1rem;
+      font-size: 0.8rem;
+      border-radius: 99px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 12px v.$primary-glow;
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 15px v.$primary-glow;
+        background: color.adjust(v.$primary, $lightness: -5%);
+      }
+    }
+  }
+}

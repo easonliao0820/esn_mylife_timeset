@@ -1,0 +1,10 @@
+@use '../variables' as v;
+
+.footer {
+  padding: 4rem 5%;
+  text-align: center;
+  border-top: 1px solid v.$glass-border;
+  margin-top: 4rem;
+  color: v.$text-secondary;
+  font-size: 0.9rem;
+}

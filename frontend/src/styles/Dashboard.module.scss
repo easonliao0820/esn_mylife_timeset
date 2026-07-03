@@ -1,0 +1,39 @@
+@use "sass:color";
+@use '../styles/variables' as v;
+
+.dashboard {
+  padding: 2rem 5% 3rem; /* 增加頂部間距從 1.5rem 到 3rem */
+  flex: 1;
+  min-height: calc(100vh - 80px); /* 確保最小高度 */
+
+  .glassCard {
+    @include v.glassmorphism;
+    padding: 1.2rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    animation: fadeIn 0.8s ease-out 0.2s forwards;
+    opacity: 0;
+
+    .cardHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.8rem;
+
+      h2 {
+        font-size: 1.2rem;
+        color: v.$dark-text;
+      }
+
+      .date {
+        color: v.$text-secondary;
+        font-size: 0.85rem;
+      }
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}

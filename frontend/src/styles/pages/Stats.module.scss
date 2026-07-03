@@ -1,0 +1,210 @@
+@use '../variables' as v;
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: v.$dark-text;
+}
+
+.monthNav {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+
+  span {
+    font-size: 1rem;
+    font-weight: 700;
+    color: v.$dark-text;
+    min-width: 130px;
+    text-align: center;
+  }
+
+  button {
+    background: white;
+    border: 1px solid v.$glass-border;
+    color: v.$dark-text;
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: v.$primary;
+      color: white;
+    }
+  }
+}
+
+.loading {
+  text-align: center;
+  padding: 4rem;
+  color: v.$text-secondary;
+  font-size: 1rem;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+/* 總計卡片 */
+.summaryCard {
+  text-align: center;
+  padding: 2rem !important;
+}
+
+.summaryLabel {
+  font-size: 0.8rem;
+  color: v.$text-secondary;
+  margin-bottom: 0.4rem;
+}
+
+.summaryHours {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: v.$primary;
+  margin: 0;
+}
+
+.summaryCount {
+  font-size: 0.75rem;
+  color: v.$text-secondary;
+  margin-top: 0.4rem;
+}
+
+/* 長條圖卡片 */
+.barsCard {
+  padding: 1.5rem !important;
+}
+
+.cardTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: v.$dark-text;
+  margin-bottom: 1.2rem;
+}
+
+.barsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: 120px 1fr 130px;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.barLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: v.$dark-text;
+  font-weight: 600;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.barTrack {
+  height: 10px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 2px;
+}
+
+.barMeta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.8rem;
+}
+
+.barHours {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: v.$dark-text;
+}
+
+.barPct {
+  font-size: 0.75rem;
+  color: v.$text-secondary;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* 分類卡片網格 */
+.catGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.catCard {
+  padding: 1.2rem !important;
+  text-align: center;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+  }
+}
+
+.catIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  margin: 0 auto 0.7rem;
+}
+
+.catLabel {
+  font-size: 0.75rem;
+  color: v.$text-secondary;
+  margin-bottom: 0.3rem;
+}
+
+.catHours {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin: 0 0 0.2rem;
+}
+
+.catPct {
+  font-size: 0.7rem;
+  color: v.$text-secondary;
+}

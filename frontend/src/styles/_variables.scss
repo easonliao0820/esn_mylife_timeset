@@ -1,0 +1,32 @@
+// 清新森林系色彩系統 - 擴充版
+$primary: #17b890;    // 薄荷綠 (主色)
+$secondary: #9dc5bb;  // 鼠尾草綠
+$bg-light: #dee5e5;   // 晨霧灰藍 (背景)
+$accent: #5e807f;     // 灰綠藍
+$dark-text: #082d0f;  // 深森黑綠
+
+// 標誌性自然輔助色
+$leaf-yellow: #e2e8b0;  // 嫩芽黃
+$earth-brown: #7c6a53;  // 大地棕
+$lake-blue: #a0d2eb;    // 湖泊藍
+$moss-green: #1a3c34;   // 深苔綠
+
+$primary-glow: rgba(23, 184, 144, 0.2);
+$glass-bg: rgba(255, 255, 255, 0.6);
+$glass-border: rgba(94, 128, 127, 0.2);
+
+$text-primary: $dark-text;
+$text-secondary: #5e807f;
+
+@mixin glassmorphism {
+  background: $glass-bg;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid $glass-border;
+}
+
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

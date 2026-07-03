@@ -1,0 +1,697 @@
+@use "sass:color";
+@use '../variables' as v;
+
+// ── Layout ───────────────────────────────────────────────
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1.25rem 4rem;
+}
+
+.section {
+  margin-bottom: 3rem;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: v.$dark-text;
+  margin-bottom: 0.25rem;
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 1em;
+    background: v.$primary;
+    border-radius: 2px;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+  }
+}
+
+.sectionSub {
+  font-size: 0.82rem;
+  color: v.$text-secondary;
+  margin-bottom: 1rem;
+}
+
+// ── Hero ─────────────────────────────────────────────────
+.hero {
+  background: linear-gradient(135deg, v.$moss-green 0%, color.adjust(v.$primary, $lightness: -10%) 100%);
+  padding: 3rem 1.25rem 2.5rem;
+  margin-bottom: 2.5rem;
+  animation: fadeUp 0.7s ease-out forwards;
+}
+
+.heroInner {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.heroTag {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  margin-bottom: 0.75rem;
+}
+
+.heroTitle {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.15;
+  margin-bottom: 1rem;
+}
+
+.heroQuote {
+  background: rgba(255, 255, 255, 0.12);
+  border-left: 3px solid rgba(255, 255, 255, 0.5);
+  border-radius: 0 8px 8px 0;
+  padding: 0.75rem 1rem;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.7;
+  font-style: italic;
+  margin: 0 0 1.5rem;
+}
+
+.overallProgress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.progressLabel {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+}
+
+.progressBarLarge {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFillLarge {
+  height: 100%;
+  background: #fff;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.progressPct {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+
+// ── 座標 ─────────────────────────────────────────────────
+.coordGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+
+  @media (max-width: 520px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.coordCard {
+  @include v.glassmorphism;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  transition: box-shadow 0.2s;
+  &:hover { box-shadow: 0 4px 12px rgba(23, 184, 144, 0.15); }
+}
+
+.coordIcon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.coordLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: v.$primary;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.2rem;
+}
+
+.coordValue {
+  font-size: 0.82rem;
+  color: v.$dark-text;
+  line-height: 1.5;
+}
+
+// ── 核心策略 ──────────────────────────────────────────────
+.strategyGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.strategyCard {
+  @include v.glassmorphism;
+  border-radius: 16px;
+  padding: 1.25rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s, box-shadow 0.25s;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(23, 184, 144, 0.18);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, v.$primary, v.$secondary);
+  }
+}
+
+.strategyNum {
+  font-size: 2rem;
+  font-weight: 900;
+  color: v.$primary;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  opacity: 0.6;
+}
+
+.strategyTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: v.$dark-text;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.strategyBody {
+  font-size: 0.82rem;
+  color: v.$text-secondary;
+  line-height: 1.65;
+  margin-bottom: 0.75rem;
+}
+
+.strategyHighlight {
+  display: inline-block;
+  background: v.$primary-glow;
+  color: v.$primary;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  border: 1px solid rgba(23, 184, 144, 0.3);
+}
+
+// ── 時間軸 ────────────────────────────────────────────────
+.timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.timelineItem {
+  position: relative;
+  padding-bottom: 2rem;
+  &:last-child { padding-bottom: 0; }
+}
+
+.timelineDot {
+  position: absolute;
+  left: -2rem;
+  top: 0.3rem;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: v.$secondary;
+  border: 2px solid white;
+  box-shadow: 0 0 0 2px v.$secondary;
+  z-index: 1;
+
+  .timelineCurrent & {
+    background: v.$primary;
+    box-shadow: 0 0 0 3px rgba(23, 184, 144, 0.35), 0 0 8px rgba(23, 184, 144, 0.5);
+  }
+}
+
+.timelineLine {
+  position: absolute;
+  left: calc(-2rem + 6px);
+  top: 20px;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, v.$primary, v.$secondary);
+  opacity: 0.35;
+}
+
+.timelineContent {
+  @include v.glassmorphism;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  transition: box-shadow 0.2s;
+
+  .timelineCurrent & {
+    border: 1.5px solid v.$primary;
+    background: rgba(23, 184, 144, 0.06);
+    box-shadow: 0 4px 16px rgba(23, 184, 144, 0.15);
+  }
+}
+
+.timelineHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.timelinePhase {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: v.$dark-text;
+}
+
+.nowBadge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: v.$primary;
+  background: v.$primary-glow;
+  padding: 0.1rem 0.5rem;
+  border-radius: 10px;
+  border: 1px solid rgba(23, 184, 144, 0.3);
+}
+
+.timelineMeta {
+  font-size: 0.72rem;
+  color: v.$text-secondary;
+  margin-bottom: 0.3rem;
+}
+
+.timelineTask {
+  font-size: 0.82rem;
+  color: v.$dark-text;
+  line-height: 1.5;
+}
+
+// ── 決策點（升學主線版） ───────────────────────────────────
+.decisionTableCard {
+  @include v.glassmorphism;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1.5px solid rgba(23, 184, 144, 0.2);
+}
+
+.decisionTable {
+  padding: 0.25rem 0;
+}
+
+.decisionTableHead {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 0.6rem 1.1rem;
+  background: rgba(23, 184, 144, 0.08);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: v.$primary;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(23, 184, 144, 0.12);
+}
+
+.decisionTableRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 0.65rem 1.1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  gap: 0.5rem;
+  &:last-child { border-bottom: none; }
+
+  &:hover { background: rgba(255, 255, 255, 0.5); }
+}
+
+.decisionCondition {
+  font-size: 0.83rem;
+  color: v.$dark-text;
+  font-weight: 500;
+}
+
+.decisionPoints {
+  font-size: 0.83rem;
+  color: v.$primary;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.decisionConclusion {
+  padding: 0.9rem 1.1rem;
+  font-size: 0.85rem;
+  color: v.$dark-text;
+  line-height: 1.7;
+  background: rgba(23, 184, 144, 0.05);
+  border-top: 1px solid rgba(23, 184, 144, 0.12);
+
+  strong { color: v.$primary; }
+}
+
+.infoBox {
+  @include v.glassmorphism;
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  font-size: 0.83rem;
+  color: v.$dark-text;
+  line-height: 1.65;
+  border-left: 3px solid v.$lake-blue;
+  background: rgba(160, 210, 235, 0.08);
+  margin-top: 1rem;
+}
+
+// ── Accordion ─────────────────────────────────────────────
+.accordionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.accordion {
+  @include v.glassmorphism;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1.5px solid v.$glass-border;
+  transition: box-shadow 0.2s;
+
+  &.currentStage {
+    border-color: v.$primary;
+    box-shadow: 0 0 0 1px rgba(23, 184, 144, 0.2);
+  }
+}
+
+.accordionHeader {
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 1.1rem;
+  gap: 0.75rem;
+  text-align: left;
+
+  &:hover { background: rgba(23, 184, 144, 0.04); }
+}
+
+.accordionLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.phaseLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: v.$primary;
+  background: v.$primary-glow;
+  padding: 0.15rem 0.5rem;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.accordionTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: v.$dark-text;
+  line-height: 1.3;
+}
+
+.accordionSub {
+  font-size: 0.7rem;
+  color: v.$text-secondary;
+  margin-top: 0.1rem;
+}
+
+.accordionRight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.progressBadge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  min-width: 70px;
+
+  span {
+    font-size: 0.68rem;
+    color: v.$text-secondary;
+    font-weight: 600;
+  }
+}
+
+.progressBar {
+  width: 70px;
+  height: 4px;
+  background: v.$bg-light;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: v.$primary;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.chevron {
+  font-size: 1.3rem;
+  color: v.$text-secondary;
+  transform: rotate(0deg);
+  transition: transform 0.25s ease;
+  display: inline-block;
+  line-height: 1;
+}
+
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+.accordionBody {
+  padding: 0 1.1rem 1.1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.stageDesc {
+  font-size: 0.83rem;
+  color: v.$text-secondary;
+  line-height: 1.65;
+  padding: 0.75rem 0 0.5rem;
+  font-style: italic;
+}
+
+.sectionBlock {
+  margin-top: 0.85rem;
+}
+
+.sectionTag {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.03em;
+
+  &.shared {
+    background: rgba(157, 197, 187, 0.2);
+    color: v.$accent;
+  }
+  &.study {
+    background: rgba(160, 210, 235, 0.25);
+    color: #2563a8;
+  }
+  &.work {
+    background: rgba(124, 106, 83, 0.15);
+    color: v.$earth-brown;
+  }
+}
+
+.checkList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.checkItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  cursor: pointer;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  transition: background 0.15s;
+
+  input[type="checkbox"] { display: none; }
+
+  &:hover { background: rgba(23, 184, 144, 0.07); }
+
+  &.checked {
+    .checkText {
+      text-decoration: line-through;
+      color: v.$text-secondary;
+      opacity: 0.7;
+    }
+  }
+}
+
+.checkBox {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid v.$secondary;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: v.$primary;
+  font-weight: 700;
+  margin-top: 0.05rem;
+  transition: background 0.15s, border-color 0.15s;
+  background: #fff;
+
+  .checkItem.checked & {
+    background: v.$primary;
+    border-color: v.$primary;
+    color: #fff;
+  }
+}
+
+.checkText {
+  font-size: 0.83rem;
+  color: v.$dark-text;
+  line-height: 1.55;
+  transition: opacity 0.2s;
+}
+
+// ── 理財 ─────────────────────────────────────────────────
+.financeList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.financeItem {
+  @include v.glassmorphism;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  border: 1.5px solid v.$glass-border;
+
+  input[type="checkbox"] { display: none; }
+
+  &:hover { box-shadow: 0 4px 12px rgba(23, 184, 144, 0.12); }
+
+  &.checked {
+    background: rgba(23, 184, 144, 0.06);
+    border-color: rgba(23, 184, 144, 0.3);
+    .financeText {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+  }
+}
+
+.financePhase {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: v.$primary;
+  margin-bottom: 0.2rem;
+}
+
+.financeText {
+  font-size: 0.83rem;
+  color: v.$dark-text;
+  line-height: 1.5;
+  transition: opacity 0.2s;
+}
+
+// ── 五個提醒 ──────────────────────────────────────────────
+.reminderGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-bottom: 1.25rem;
+}
+
+.reminderCard {
+  @include v.glassmorphism;
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 16px rgba(23, 184, 144, 0.15);
+  }
+}
+
+.reminderNum {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: v.$primary;
+  line-height: 1;
+  opacity: 0.5;
+  flex-shrink: 0;
+  min-width: 1.8rem;
+  margin-top: 0.1rem;
+}
+
+.reminderText {
+  font-size: 0.88rem;
+  color: v.$dark-text;
+  line-height: 1.7;
+  font-weight: 500;
+}
+
+.footnote {
+  font-size: 0.8rem;
+  color: v.$text-secondary;
+  font-style: italic;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+// ── Animation ─────────────────────────────────────────────
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}

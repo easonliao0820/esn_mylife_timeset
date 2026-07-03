@@ -1,0 +1,324 @@
+@use "sass:color";
+@use '../variables' as v;
+
+.hero {
+  padding: 2rem 1rem;
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto;
+  animation: fadeIn 0.8s ease-out forwards;
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.2;
+    background: linear-gradient(to bottom, v.$dark-text, v.$moss-green);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  p {
+    font-size: 0.9rem;
+    color: v.$text-secondary;
+  }
+}
+
+.statsSection {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.statCard {
+  padding: 0.8rem;
+  text-align: center;
+}
+
+.statLabel {
+  display: block;
+  font-size: 0.7rem;
+  color: v.$text-secondary;
+  margin-bottom: 4px;
+}
+
+.statValue {
+  font-size: 1.1rem;
+  font-weight: 700;
+  &.remaining { color: v.$primary; }
+  &.unscheduled { color: v.$moss-green; }
+}
+
+.taskCardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.miniTaskCard {
+  @include v.glassmorphism;
+  padding: 0.8rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); // 加入彈性效果
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: v.$primary;
+    transition: width 0.3s ease;
+  }
+
+  &.important::before { background: v.$leaf-yellow; }
+  &.relax::before { background: v.$lake-blue; }
+  &.personal::before { background: v.$earth-brown; }
+
+  &:hover {
+    transform: translateY(-5px);
+    background: white;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.08);
+  }
+
+  /* 跳色高亮狀態 - 多層霓虹光暈 */
+  &.activeCard {
+    background: white;
+    transform: scale(1.05);
+    z-index: 10;
+    
+    &::before { width: 10px; }
+
+    &.important { 
+      border-color: #ffd700;
+      box-shadow: 
+        0 0 10px rgba(226, 232, 176, 0.8),
+        0 0 15px rgba(255, 215, 0, 0.3);
+    }
+    &.relax { 
+      border-color: #00d2ff;
+      box-shadow: 
+        0 0 10px rgba(160, 210, 235, 0.8),
+        0 0 15px rgba(0, 210, 255, 0.3);
+    }
+    &.personal { 
+      border-color: #c8a27c;
+      box-shadow: 
+        0 0 10px rgba(124, 106, 83, 0.5),
+        0 0 15px rgba(124, 106, 83, 0.2);
+    }
+    &.work { 
+      border-color: #00ff95;
+      box-shadow: 
+        0 0 10px rgba(23, 184, 144, 0.8),
+        0 0 15px rgba(0, 255, 149, 0.3);
+    }
+  }
+
+  .cardTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.4rem;
+  }
+
+  .cardTime {
+    font-size: 0.65rem;
+    color: v.$text-secondary;
+    font-weight: 600;
+  }
+
+  .categoryBadge {
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: v.$bg-light;
+    color: v.$accent;
+    font-weight: 600;
+  }
+
+  .deleteBtn {
+    background: rgba(255, 71, 87, 0.1);
+    border: none;
+    color: #ff4757;
+    font-size: 0.8rem;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: #ff4757;
+      color: white;
+      transform: scale(1.1);
+    }
+  }
+
+  h4 {
+    font-size: 0.85rem;
+    margin-bottom: 0.2rem;
+    color: v.$dark-text;
+    font-weight: 700;
+  }
+
+  p {
+    font-size: 0.7rem;
+    color: v.$text-secondary;
+  }
+}
+
+/* 時間軸色塊 - 標誌色優化 */
+.important { background: rgba(226, 232, 176, 0.3) !important; border-left-color: v.$leaf-yellow !important; }
+.relax { background: rgba(160, 210, 235, 0.3) !important; border-left-color: v.$lake-blue !important; }
+.personal { background: rgba(124, 106, 83, 0.15) !important; border-left-color: v.$earth-brown !important; }
+.work { background: rgba(23, 184, 144, 0.15) !important; border-left-color: v.$primary !important; }
+
+/* 時間軸跳色高亮 */
+.activeBar {
+  transform: scaleY(1.25) !important;
+  z-index: 50 !important;
+  border-left-width: 8px !important;
+  border-right: 2px solid white;
+  filter: brightness(1.2);
+  
+  &.important { box-shadow: 0 0 15px #ffd700, 0 0 40px rgba(255, 215, 0, 0.4) !important; }
+  &.relax { box-shadow: 0 0 15px #00d2ff, 0 0 40px rgba(0, 210, 255, 0.4) !important; }
+  &.personal { box-shadow: 0 0 15px #c8a27c, 0 0 40px rgba(124, 106, 83, 0.4) !important; }
+  &.work { box-shadow: 0 0 15px #00ff95, 0 0 40px rgba(0, 255, 149, 0.4) !important; }
+}
+
+.timelineWrapper {
+  padding: 0;
+  overflow: hidden;
+}
+
+.timelineHeader {
+  padding: 0.25rem 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.timelineContent {
+  border: none !important;
+  background: transparent !important;
+  height: auto !important;
+}
+
+.sidebarCustom {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+// ── 人生規劃 Widget ────────────────────────────────────────
+.planWidget {
+  border-left: 3px solid v.$primary !important;
+}
+
+.planWidgetHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.6rem;
+}
+
+.planWidgetTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: v.$dark-text;
+  margin-bottom: 0.15rem;
+}
+
+.planCurrentStage {
+  font-size: 0.7rem;
+  color: v.$primary;
+  font-weight: 600;
+}
+
+.planViewAll {
+  font-size: 0.72rem;
+  color: v.$primary;
+  text-decoration: none;
+  white-space: nowrap;
+  font-weight: 600;
+  &:hover { text-decoration: underline; }
+}
+
+.planProgressRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.planProgressBar {
+  flex: 1;
+  height: 5px;
+  background: v.$bg-light;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.planProgressFill {
+  height: 100%;
+  background: v.$primary;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.planProgressText {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: v.$text-secondary;
+  white-space: nowrap;
+}
+
+.planTodoList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.planTodoItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  cursor: pointer;
+  padding: 0.25rem 0.35rem;
+  border-radius: 6px;
+  &:hover { background: rgba(23, 184, 144, 0.06); }
+}
+
+.planCheckBox {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid v.$secondary;
+  border-radius: 3px;
+  margin-top: 0.1rem;
+  background: #fff;
+}
+
+.planTodoText {
+  font-size: 0.78rem;
+  color: v.$dark-text;
+  line-height: 1.45;
+}
+
+.planAllDone {
+  font-size: 0.82rem;
+  color: v.$primary;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
