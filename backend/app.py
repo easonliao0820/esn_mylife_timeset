@@ -1,3 +1,4 @@
+import os
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from pymongo import MongoClient
@@ -6,8 +7,9 @@ from bson import ObjectId
 app = Flask(__name__)
 CORS(app) # 允許前端跨來源請求
 
-# MongoDB 連線設定 (預設連線到本地端的 timeplanner 資料庫)
-client = MongoClient('mongodb://localhost:27017/')
+# MongoDB 連線設定 (本地開發預設連線 localhost；正式環境改用 MONGODB_URI 環境變數，例如 MongoDB Atlas)
+MONGODB_URI = os.environ.get('MONGODB_URI', 'mongodb://localhost:27017/')
+client = MongoClient(MONGODB_URI)
 db = client['timeplanner']
 tasks_collection = db['tasks']
 memos_collection = db['memos']
