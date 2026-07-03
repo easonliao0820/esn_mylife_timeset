@@ -4,7 +4,7 @@ import styles from '../styles/components/Footer.module.scss';
 function Footer() {
   return (
     <footer className={styles.footer}>
-      <p>© 2026 時光規劃大師 PRO. 專為高效人士設計。</p>
+      <p>© 2026 ESN｜時間管理大師. 專為高效人士設計。</p>
     </footer>
   );
 }

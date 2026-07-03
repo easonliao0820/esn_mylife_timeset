@@ -52,7 +52,7 @@ function Navbar() {
   return (
     <>
       <nav className={styles.navbar}>
-        <div className={styles.logo}>TIME PLANNER</div>
+        <div className={styles.logo}>ESN｜時間管理大師</div>
         <div className={styles.navLinks}>
           <Link to="/">首頁</Link>
           <Link to="/calendar">行事曆</Link>
