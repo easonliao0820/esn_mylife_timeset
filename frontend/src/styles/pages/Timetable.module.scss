@@ -52,6 +52,40 @@
       box-shadow: 0 6px 15px rgba(23, 184, 144, 0.3);
     }
   }
+
+  /* 新增課表按鈕樣式（與刪除課表同格式，改為藍色） */
+  .addTableBtn {
+    background: rgba(82, 130, 184, 0.1);
+    color: #5282b8;
+    border: 1px solid rgba(82, 130, 184, 0.2);
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: rgba(82, 130, 184, 0.2);
+    }
+  }
+
+  /* 刪除課表按鈕樣式 */
+  .deleteTableBtn {
+    background: rgba(184, 82, 82, 0.1);
+    color: #b85252;
+    border: 1px solid rgba(184, 82, 82, 0.2);
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: rgba(184, 82, 82, 0.2);
+    }
+  }
 }
 
 .rightSide {
@@ -99,7 +133,7 @@
 
 .gridContainer { flex: 1; display: flex; flex-direction: column; }
 .gridHeader {
-  display: grid; grid-template-columns: repeat(5, 1fr); height: 40px; border-bottom: 1px solid v.$glass-border; background: rgba(255, 255, 255, 0.3);
+  display: grid; grid-template-columns: repeat(7, 1fr); height: 40px; border-bottom: 1px solid v.$glass-border; background: rgba(255, 255, 255, 0.3);
   .dayLabel {
     display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: v.$dark-text;
     &.today { background: v.$primary-glow; color: v.$primary; position: relative; &::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: v.$primary; } }
@@ -108,7 +142,7 @@
 
 .gridBody { position: relative; flex: 1; }
 .gridRow {
-  display: grid; grid-template-columns: repeat(5, 1fr); height: 40px; border-bottom: 1px dashed rgba(0, 0, 0, 0.05);
+  display: grid; grid-template-columns: repeat(7, 1fr); height: 40px; border-bottom: 1px dashed rgba(0, 0, 0, 0.05);
   .gridCell { border-right: 1px solid rgba(0, 0, 0, 0.02); &:last-child { border-right: none; } }
 }
 
@@ -124,10 +158,11 @@
       position: absolute; right: 2px; top: 2px; background: transparent; border: none; cursor: pointer; font-size: 0.6rem; opacity: 0; color: v.$accent; transition: opacity 0.2s;
     }
   }
-  &.work { background: rgba(23, 184, 144, 0.12); border-left-color: v.$primary; color: color.adjust(v.$primary, $lightness: -20%); }
-  &.important { background: rgba(226, 232, 176, 0.25); border-left-color: v.$leaf-yellow; color: color.adjust(v.$leaf-yellow, $lightness: -45%); }
-  &.relax { background: rgba(160, 210, 235, 0.2); border-left-color: v.$lake-blue; color: color.adjust(v.$lake-blue, $lightness: -30%); }
-  &.personal { background: rgba(124, 106, 83, 0.1); border-left-color: v.$earth-brown; color: v.$earth-brown; }
+  &.catCourse {
+    background: color-mix(in srgb, var(--cat-color, #{v.$primary}) 18%, transparent);
+    border-left-color: var(--cat-color, #{v.$primary});
+    color: color-mix(in srgb, var(--cat-color, #{v.$primary}) 55%, black);
+  }
 }
 
 /* Modal 樣式 */

@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import homeStyles from '../styles/pages/Home.module.scss';
 import dashStyles from '../styles/Dashboard.module.scss';
 import timelineStyles from '../styles/pages/Timeline.module.scss';
 import ttStyles from '../styles/pages/Timetable.module.scss'; // 借用 Modal 樣式
 import { fetchMergedTasks } from '../utils/dataService';
-import { loadPlanChecks, calcPlanProgress, getCurrentStageItems, savePlanChecks } from '../utils/planData';
+import { useCategories, getCategory, categoryStyleVars } from '../utils/categories';
 
 function Home() {
+  const categories = useCategories();
   const [tasks, setTasks] = useState([]);
   const [packedTasks, setPackedTasks] = useState([]);
   const [laneCount, setLaneCount] = useState(0);
@@ -25,7 +25,6 @@ function Home() {
     category: 'work'
   });
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [planChecks, setPlanChecks] = useState(loadPlanChecks);
 
   const scrollAreaRef = useRef(null);
   const pixelsPerHour = 100;
@@ -65,6 +64,11 @@ function Home() {
     };
   }, []);
 
+  // 標籤被刪除時，表單分類自動退回第一個可用標籤（不寫回 state，避免多一次渲染）
+  const effectiveCategory = categories.some(c => c.id === formData.category)
+    ? formData.category
+    : (categories[0]?.id || formData.category);
+
   // 當時間或任務更新時，重新計算統計資訊
   useEffect(() => {
     calculateStats(tasks);
@@ -94,7 +98,7 @@ function Home() {
       title: formData.title,
       time: `${formData.startTime} - ${formData.endTime}`,
       date: todayStr,
-      category: formData.category,
+      category: effectiveCategory,
       status: '待處理'
     };
 
@@ -203,7 +207,6 @@ function Home() {
   };
 
   const hours = Array.from({ length: 25 }, (_, i) => i);
-  const getCategoryClass = (cat) => homeStyles[cat || 'work'];
 
   return (
     <Layout>
@@ -224,48 +227,6 @@ function Home() {
           </div>
         </div>
 
-        {/* 人生規劃進度 Widget */}
-        {(() => {
-          const progress = calcPlanProgress(planChecks);
-          const { stage, items } = getCurrentStageItems(planChecks);
-          const toggleCheck = (id) => {
-            setPlanChecks(prev => {
-              const next = { ...prev, [id]: !prev[id] };
-              savePlanChecks(next);
-              return next;
-            });
-          };
-          return (
-            <div className={`${dashStyles.glassCard} ${homeStyles.planWidget}`} style={{ marginBottom: '1.5rem' }}>
-              <div className={homeStyles.planWidgetHeader}>
-                <div>
-                  <h3 className={homeStyles.planWidgetTitle}>人生規劃進度</h3>
-                  <span className={homeStyles.planCurrentStage}>{stage.phase}・{stage.title}</span>
-                </div>
-                <Link to="/plan" className={homeStyles.planViewAll}>查看全部 →</Link>
-              </div>
-              <div className={homeStyles.planProgressRow}>
-                <div className={homeStyles.planProgressBar}>
-                  <div className={homeStyles.planProgressFill} style={{ width: `${progress.pct}%` }} />
-                </div>
-                <span className={homeStyles.planProgressText}>{progress.done}/{progress.total}</span>
-              </div>
-              <div className={homeStyles.planTodoList}>
-                {items.length === 0 ? (
-                  <p className={homeStyles.planAllDone}>🎉 當前階段全部完成！</p>
-                ) : (
-                  items.map(item => (
-                    <label key={item.id} className={homeStyles.planTodoItem} onClick={() => toggleCheck(item.id)}>
-                      <span className={homeStyles.planCheckBox} />
-                      <span className={homeStyles.planTodoText}>{item.text}</span>
-                    </label>
-                  ))
-                )}
-              </div>
-            </div>
-          );
-        })()}
-
         <div className={`${dashStyles.glassCard} ${homeStyles.timelineWrapper}`} style={{ marginBottom: '1.5rem' }}>
           <div className={homeStyles.timelineHeader}>
             <div className={dashStyles.cardHeader}>
@@ -279,7 +240,7 @@ function Home() {
           <div className={`${timelineStyles.timelinePage} ${homeStyles.timelineContent}`}>
             <div className={timelineStyles.sidebar} style={{ width: '60px' }}>
               {Array.from({ length: Math.max(laneCount, 1) }).map((_, i) => (
-                <div key={i} className={timelineStyles.rowTitle} style={{ height: '52px', justifyContent: 'center', fontSize: '0.6rem', color: '#94a3b8' }}>
+                <div key={i} className={timelineStyles.rowTitle} style={{ height: '80px', justifyContent: 'center', fontSize: '0.6rem', color: '#94a3b8' }}>
                   L-{i+1}
                 </div>
               ))}
@@ -293,7 +254,7 @@ function Home() {
                   ))}
                 </div>
 
-                <div className={timelineStyles.timelineTrack} style={{ height: `${Math.max(laneCount, 1) * 52}px`, minHeight: '60px' }}>
+                <div className={timelineStyles.timelineTrack} style={{ height: `${Math.max(laneCount, 1) * 80}px`, minHeight: '240px' }}>
                   {hours.map(hour => (
                     <div key={`line-${hour}`} className={timelineStyles.gridLine} style={{ left: `${hour * pixelsPerHour}px` }} />
                   ))}
@@ -313,16 +274,17 @@ function Home() {
                     const isActive = activeTaskId === task._id;
 
                     return (
-                      <div 
-                        key={task._id} 
+                      <div
+                        key={task._id}
                         onClick={() => setActiveTaskId(task._id === activeTaskId ? null : task._id)}
-                        className={`${timelineStyles.taskBar} ${getCategoryClass(task.category)} ${isActive ? homeStyles.activeBar : ''}`}
-                        style={{ 
-                          left: `${left}px`, 
+                        className={`${timelineStyles.taskBar} ${homeStyles.catBar} ${isActive ? homeStyles.activeBar : ''}`}
+                        style={{
+                          left: `${left}px`,
                           width: `${right - left}px`,
-                          top: `${(task.lane * 52) + 8}px`,
-                          height: '36px',
-                          zIndex: isActive ? 20 : 5
+                          top: `${(task.lane * 80) + 16}px`,
+                          height: '48px',
+                          zIndex: isActive ? 20 : 5,
+                          ...categoryStyleVars(categories, task.category)
                         }}
                       >
                         <div className={timelineStyles.taskTitle} style={{ fontSize: '0.65rem' }}>
@@ -339,17 +301,18 @@ function Home() {
 
         <div className={homeStyles.taskCardGrid}>
           {packedTasks.map(task => (
-            <div 
-              key={task._id} 
+            <div
+              key={task._id}
               id={`card-${task._id}`}
-              className={`${homeStyles.miniTaskCard} ${getCategoryClass(task.category)} ${activeTaskId === task._id ? homeStyles.activeCard : ''}`}
+              className={`${homeStyles.miniTaskCard} ${activeTaskId === task._id ? homeStyles.activeCard : ''}`}
+              style={categoryStyleVars(categories, task.category)}
               onClick={() => setActiveTaskId(task._id === activeTaskId ? null : task._id)}
             >
               <div className={homeStyles.cardTop}>
                 <span className={homeStyles.cardTime}>{task.time}</span>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                   <span className={homeStyles.categoryBadge}>
-                    {task.isRecurring ? '課程' : (task.category === 'important' ? '緊急' : task.category === 'relax' ? '放鬆' : task.category === 'personal' ? '個人' : '工作')}
+                    {task.isRecurring ? '課程' : getCategory(categories, task.category).label}
                   </span>
                   {!task.isRecurring && activeTaskId === task._id && (
                     <button 
@@ -388,11 +351,10 @@ function Home() {
                 </div>
                 <div className={ttStyles.formGroup}>
                   <label>分類</label>
-                  <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                    <option value="work">工作/學習</option>
-                    <option value="important">緊急/重要</option>
-                    <option value="relax">放鬆/休息</option>
-                    <option value="personal">個人/生活</option>
+                  <select value={effectiveCategory} onChange={e => setFormData({...formData, category: e.target.value})}>
+                    {categories.map(c => (
+                      <option key={c.id} value={c.id}>{c.icon} {c.label}</option>
+                    ))}
                   </select>
                 </div>
                 <div className={ttStyles.modalActions}>

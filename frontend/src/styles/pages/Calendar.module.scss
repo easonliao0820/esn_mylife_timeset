@@ -140,6 +140,7 @@
   @include v.glassmorphism;
   background: rgba(255, 255, 255, 0.3);
   min-height: 85px;
+  min-width: 0; // 避免格內長標題(white-space: nowrap)撐爆 grid 欄寬，導致第七欄溢出畫面
   padding: 6px;
   transition: all 0.3s ease;
   cursor: pointer;
@@ -357,11 +358,8 @@
       }
     }
 
-    /* 分類色彩 - 預設淺色 */
-    &.important { background: rgba(226, 232, 176, 0.4); border-left-color: v.$leaf-yellow; }
-    &.relax { background: rgba(160, 210, 235, 0.4); border-left-color: v.$lake-blue; }
-    &.personal { background: rgba(124, 106, 83, 0.2); border-left-color: v.$earth-brown; }
-    &.work { background: rgba(23, 184, 144, 0.2); border-left-color: v.$primary; }
+    /* 分類色彩 - 依標籤顏色動態上色 */
+    &.catColor { background: color-mix(in srgb, var(--cat-color, #{v.$primary}) 25%, transparent); border-left-color: var(--cat-color, #{v.$primary}); }
     &.milestone { background: rgba(255, 183, 77, 0.25); border-left-color: #ffb74d; }
 
     /* 選中狀態 - 變不透明、置頂、並加上跳色光暈 */
@@ -369,11 +367,8 @@
       opacity: 1 !important;
       transform: scale(1.02);
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-      
-      &.important { background: v.$leaf-yellow; box-shadow: 0 0 12px v.$leaf-yellow; }
-      &.relax { background: v.$lake-blue; box-shadow: 0 0 12px v.$lake-blue; }
-      &.personal { background: v.$earth-brown; color: white; h4, span { color: white; } }
-      &.work { background: v.$primary; box-shadow: 0 0 12px v.$primary; color: white; h4, span { color: white; } }
+
+      &.catColor { background: var(--cat-color, #{v.$primary}); box-shadow: 0 0 12px var(--cat-color, #{v.$primary}); color: white; h4, span { color: white; } }
       &.milestone { background: #ffb74d; box-shadow: 0 0 12px rgba(255,183,77,0.6); color: #5c3300; h4, span { color: #5c3300; } }
     }
 

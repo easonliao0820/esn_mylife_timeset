@@ -72,13 +72,9 @@
     top: 0;
     bottom: 0;
     width: 4px;
-    background: v.$primary;
+    background: var(--cat-color, #{v.$primary});
     transition: width 0.3s ease;
   }
-
-  &.important::before { background: v.$leaf-yellow; }
-  &.relax::before { background: v.$lake-blue; }
-  &.personal::before { background: v.$earth-brown; }
 
   &:hover {
     transform: translateY(-5px);
@@ -86,38 +82,17 @@
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.08);
   }
 
-  /* 跳色高亮狀態 - 多層霓虹光暈 */
+  /* 跳色高亮狀態 - 依標籤顏色動態上色 */
   &.activeCard {
     background: white;
     transform: scale(1.05);
     z-index: 10;
-    
-    &::before { width: 10px; }
+    border-color: var(--cat-color, #{v.$primary});
+    box-shadow:
+      0 0 10px color-mix(in srgb, var(--cat-color, #{v.$primary}) 70%, transparent),
+      0 0 15px color-mix(in srgb, var(--cat-color, #{v.$primary}) 30%, transparent);
 
-    &.important { 
-      border-color: #ffd700;
-      box-shadow: 
-        0 0 10px rgba(226, 232, 176, 0.8),
-        0 0 15px rgba(255, 215, 0, 0.3);
-    }
-    &.relax { 
-      border-color: #00d2ff;
-      box-shadow: 
-        0 0 10px rgba(160, 210, 235, 0.8),
-        0 0 15px rgba(0, 210, 255, 0.3);
-    }
-    &.personal { 
-      border-color: #c8a27c;
-      box-shadow: 
-        0 0 10px rgba(124, 106, 83, 0.5),
-        0 0 15px rgba(124, 106, 83, 0.2);
-    }
-    &.work { 
-      border-color: #00ff95;
-      box-shadow: 
-        0 0 10px rgba(23, 184, 144, 0.8),
-        0 0 15px rgba(0, 255, 149, 0.3);
-    }
+    &::before { width: 10px; }
   }
 
   .cardTop {
@@ -176,11 +151,11 @@
   }
 }
 
-/* 時間軸色塊 - 標誌色優化 */
-.important { background: rgba(226, 232, 176, 0.3) !important; border-left-color: v.$leaf-yellow !important; }
-.relax { background: rgba(160, 210, 235, 0.3) !important; border-left-color: v.$lake-blue !important; }
-.personal { background: rgba(124, 106, 83, 0.15) !important; border-left-color: v.$earth-brown !important; }
-.work { background: rgba(23, 184, 144, 0.15) !important; border-left-color: v.$primary !important; }
+/* 時間軸色塊 - 依標籤顏色動態上色 */
+.catBar {
+  background: color-mix(in srgb, var(--cat-color, #{v.$primary}) 20%, transparent) !important;
+  border-left-color: var(--cat-color, #{v.$primary}) !important;
+}
 
 /* 時間軸跳色高亮 */
 .activeBar {
@@ -189,11 +164,7 @@
   border-left-width: 8px !important;
   border-right: 2px solid white;
   filter: brightness(1.2);
-  
-  &.important { box-shadow: 0 0 15px #ffd700, 0 0 40px rgba(255, 215, 0, 0.4) !important; }
-  &.relax { box-shadow: 0 0 15px #00d2ff, 0 0 40px rgba(0, 210, 255, 0.4) !important; }
-  &.personal { box-shadow: 0 0 15px #c8a27c, 0 0 40px rgba(124, 106, 83, 0.4) !important; }
-  &.work { box-shadow: 0 0 15px #00ff95, 0 0 40px rgba(0, 255, 149, 0.4) !important; }
+  box-shadow: 0 0 15px var(--cat-color, #{v.$primary}), 0 0 40px color-mix(in srgb, var(--cat-color, #{v.$primary}) 40%, transparent) !important;
 }
 
 .timelineWrapper {

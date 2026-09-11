@@ -4,8 +4,10 @@ import styles from '../styles/pages/Calendar.module.scss';
 import dashStyles from '../styles/Dashboard.module.scss';
 import ttStyles from '../styles/pages/Timetable.module.scss'; // 借用 Modal 樣式
 import { fetchMergedTasks } from '../utils/dataService';
+import { useCategories, categoryStyleVars } from '../utils/categories';
 
 function Calendar() {
+  const categories = useCategories();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [allTasks, setAllTasks] = useState([]);
   const [selectedDateInfo, setSelectedDateInfo] = useState(null);
@@ -23,6 +25,9 @@ function Calendar() {
     endTime: '11:00',
     category: 'work'
   });
+  const effectiveCategory = (formData.category === 'milestone' || categories.some(c => c.id === formData.category))
+    ? formData.category
+    : (categories[0]?.id || formData.category);
 
   const openAddModal = () => {
     setEditingTaskId(null);
@@ -84,7 +89,7 @@ function Calendar() {
     const taskData = {
       title: formData.title,
       time: `${formData.startTime} - ${formData.endTime}`,
-      category: formData.category,
+      category: effectiveCategory,
     };
 
     // 里程碑是虛擬任務（ID 格式 milestone-YYYY-MM-DD），無法 PATCH，改成 POST 轉為真實任務
@@ -256,13 +261,19 @@ function Calendar() {
                     const top = t(sH, sM);
                     const height = Math.max(t(eH, eM) - top, 26);
                     const isActive = activeDrawerTaskId === task._id;
+                    const isMilestoneCat = task.category === 'milestone';
 
                     return (
-                      <div 
-                        key={task._id} 
+                      <div
+                        key={task._id}
                         onClick={(e) => { e.stopPropagation(); setActiveDrawerTaskId(task._id === activeDrawerTaskId ? null : task._id); }}
-                        className={`${styles.vTaskBlock} ${styles[task.category || 'work']} ${isActive ? styles.vActive : ''}`}
-                        style={{ top: `${top}px`, height: `${height}px`, zIndex: isActive ? 100 : 2 }}
+                        className={`${styles.vTaskBlock} ${isMilestoneCat ? styles.milestone : styles.catColor} ${isActive ? styles.vActive : ''}`}
+                        style={{
+                          top: `${top}px`,
+                          height: `${height}px`,
+                          zIndex: isActive ? 100 : 2,
+                          ...(isMilestoneCat ? {} : categoryStyleVars(categories, task.category))
+                        }}
                       >
                         <div className={styles.vTaskInner}>
                           <h4>{task.isRecurring && '🔖 '}{task.title}</h4>
@@ -311,12 +322,11 @@ function Calendar() {
                 </div>
                 <div className={ttStyles.formGroup}>
                   <label>分類</label>
-                  <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                    <option value="work">工作/學習</option>
-                    <option value="important">緊急/重要</option>
-                    <option value="relax">放鬆/休息</option>
-                    <option value="personal">個人/生活</option>
-                    <option value="milestone">里程碑</option>
+                  <select value={effectiveCategory} onChange={e => setFormData({...formData, category: e.target.value})}>
+                    {categories.map(c => (
+                      <option key={c.id} value={c.id}>{c.icon} {c.label}</option>
+                    ))}
+                    <option value="milestone">🚩 里程碑</option>
                   </select>
                 </div>
                 <div className={ttStyles.modalActions}>

@@ -14,16 +14,50 @@ db = client['timeplanner']
 tasks_collection = db['tasks']
 memos_collection = db['memos']
 schedule_collection = db['schedule'] # 新增課表集合
+schedule_tables_collection = db['schedule_tables'] # 課表分組 (可同時存在多份課表)
 
 # 輔助函式：將 MongoDB 的 Document 轉換為 JSON 可讀格式
 def serialize_doc(doc):
     doc['_id'] = str(doc['_id'])
     return doc
 
+# --- 課表分組 API (支援多份課表切換) ---
+@app.route('/api/schedule-tables', methods=['GET'])
+def get_schedule_tables():
+    tables = list(schedule_tables_collection.find())
+    return jsonify([serialize_doc(t) for t in tables])
+
+@app.route('/api/schedule-tables', methods=['POST'])
+def add_schedule_table():
+    data = request.json
+    new_table = {
+        'name': data.get('name'),
+        'semesterStart': data.get('semesterStart', '2026-02-16'),
+        'semesterEnd': data.get('semesterEnd', '2026-06-22'),
+        'showOnCalendar': data.get('showOnCalendar', True) # 是否把這份課表的回圈時段合併顯示到行事曆/首頁/時間軸
+    }
+    result = schedule_tables_collection.insert_one(new_table)
+    new_table['_id'] = str(result.inserted_id)
+    return jsonify(new_table), 201
+
+@app.route('/api/schedule-tables/<id>', methods=['PATCH'])
+def update_schedule_table(id):
+    data = request.json
+    schedule_tables_collection.update_one({'_id': ObjectId(id)}, {'$set': data})
+    return jsonify({'message': 'Schedule table updated successfully'})
+
+@app.route('/api/schedule-tables/<id>', methods=['DELETE'])
+def delete_schedule_table(id):
+    schedule_collection.delete_many({'tableId': id})
+    schedule_tables_collection.delete_one({'_id': ObjectId(id)})
+    return jsonify({'message': 'Schedule table deleted successfully'})
+
 # --- 課表 API (每週重複) ---
 @app.route('/api/schedule', methods=['GET'])
 def get_schedule():
-    items = list(schedule_collection.find())
+    table_id = request.args.get('tableId')
+    query = {'tableId': table_id} if table_id else {}
+    items = list(schedule_collection.find(query))
     return jsonify([serialize_doc(item) for item in items])
 
 @app.route('/api/schedule', methods=['POST'])
@@ -34,7 +68,8 @@ def add_schedule_item():
         'day': data.get('day'), # 1-7 (週一到週日)
         'time': data.get('time'),
         'room': data.get('room'),
-        'category': data.get('category', 'work')
+        'category': data.get('category', 'work'),
+        'tableId': data.get('tableId')
     }
     result = schedule_collection.insert_one(new_item)
     new_item['_id'] = str(result.inserted_id)

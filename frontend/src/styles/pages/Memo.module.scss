@@ -87,11 +87,8 @@
     .deleteBtn { opacity: 1; }
   }
 
-  /* 根據標誌色變色 */
-  &.important { border-top: 4px solid v.$leaf-yellow; }
-  &.relax { border-top: 4px solid v.$lake-blue; }
-  &.personal { border-top: 4px solid v.$earth-brown; }
-  &.work { border-top: 4px solid v.$primary; }
+  /* 根據標籤顏色動態上色 */
+  border-top: 4px solid var(--cat-color, #{v.$primary});
 
   .memoHeader {
     display: flex;
@@ -102,8 +99,8 @@
       font-size: 0.65rem;
       padding: 2px 8px;
       border-radius: 4px;
-      background: rgba(0, 0, 0, 0.04);
-      color: v.$accent;
+      background: color-mix(in srgb, var(--cat-color, #{v.$primary}) 15%, transparent);
+      color: color-mix(in srgb, var(--cat-color, #{v.$primary}) 65%, black);
       font-weight: 600;
     }
   }

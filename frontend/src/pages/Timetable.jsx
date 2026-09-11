@@ -2,15 +2,22 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import dashStyles from '../styles/Dashboard.module.scss';
 import styles from '../styles/pages/Timetable.module.scss';
+import { useCategories, categoryStyleVars } from '../utils/categories';
 
 function Timetable() {
+  const categories = useCategories();
   const startHour = 8;
-  const [endHour, setEndHour] = useState(19); // 讓使用者修改過的 19 保持住
+  const [endHour, setEndHour] = useState(22);
   
-  const [semesterStart, setSemesterStart] = useState(localStorage.getItem('tt_semesterStart') || '2026-02-16');
-  const [semesterEnd, setSemesterEnd] = useState(localStorage.getItem('tt_semesterEnd') || '2026-06-22');
   const [schedule, setSchedule] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // 課表分組（可切換多份課表）；學期日期範圍存在各課表的資料上，隨選取的課表衍生出來
+  const [tables, setTables] = useState([]);
+  const [selectedTableId, setSelectedTableId] = useState(localStorage.getItem('tt_selectedTableId') || '');
+  const selectedTable = tables.find(t => t._id === selectedTableId);
+  const semesterStart = selectedTable?.semesterStart || '2026-02-16';
+  const semesterEnd = selectedTable?.semesterEnd || '2026-06-22';
   
   // Modal 與 編輯狀態
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,8 +33,9 @@ function Timetable() {
     category: 'work'
   });
 
-  const fetchSchedule = () => {
-    fetch('/api/schedule')
+  const fetchSchedule = (tableId) => {
+    if (!tableId) return;
+    fetch(`/api/schedule?tableId=${tableId}`)
       .then(res => res.json())
       .then(data => {
         setSchedule(data);
@@ -36,14 +44,73 @@ function Timetable() {
       .catch(err => console.error('無法獲取課表:', err));
   };
 
+  const fetchTables = () => {
+    fetch('/api/schedule-tables')
+      .then(res => res.json())
+      .then(data => {
+        setTables(data);
+        setSelectedTableId(prev => {
+          if (prev && data.some(t => t._id === prev)) return prev;
+          return data[0]?._id || '';
+        });
+      })
+      .catch(err => console.error('無法獲取課表清單:', err));
+  };
+
   useEffect(() => {
-    fetchSchedule();
+    fetchTables();
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('tt_semesterStart', semesterStart);
-    localStorage.setItem('tt_semesterEnd', semesterEnd);
-  }, [semesterStart, semesterEnd]);
+    if (selectedTableId) {
+      localStorage.setItem('tt_selectedTableId', selectedTableId);
+      fetchSchedule(selectedTableId);
+    }
+  }, [selectedTableId]);
+
+  // 標籤被刪除時，表單分類自動退回第一個可用標籤（不寫回 state，避免多一次渲染）
+  const effectiveCategory = categories.some(c => c.id === formData.category)
+    ? formData.category
+    : (categories[0]?.id || formData.category);
+
+  const updateTableField = (field, value) => {
+    setTables(prev => prev.map(t => t._id === selectedTableId ? { ...t, [field]: value } : t));
+
+    fetch(`/api/schedule-tables/${selectedTableId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [field]: value })
+    }).catch(err => console.error('無法更新學期範圍:', err));
+  };
+
+  const handleCreateTable = () => {
+    const name = window.prompt('新課表名稱？（例如：正課課表、讀書計劃）');
+    if (!name || !name.trim()) return;
+    fetch('/api/schedule-tables', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name.trim() })
+    })
+      .then(res => res.json())
+      .then(newTable => {
+        setTables(prev => [...prev, newTable]);
+        setSelectedTableId(newTable._id);
+      });
+  };
+
+  const handleDeleteTable = () => {
+    if (!selectedTable) return;
+    if (!window.confirm(`確定要刪除課表「${selectedTable.name}」嗎？此課表底下所有課程也會一併刪除。`)) return;
+    fetch(`/api/schedule-tables/${selectedTable._id}`, { method: 'DELETE' })
+      .then(() => {
+        setTables(prev => {
+          const remaining = prev.filter(t => t._id !== selectedTable._id);
+          setSelectedTableId(remaining[0]?._id || '');
+          return remaining;
+        });
+      })
+      .catch(err => console.error('無法刪除課表:', err));
+  };
 
   // 開啟新增模式
   const openAddModal = () => {
@@ -73,7 +140,7 @@ function Timetable() {
     e.stopPropagation();
     if (window.confirm('確定要刪除這門課程嗎？這會影響所有週次的顯示。')) {
       fetch(`/api/schedule/${id}`, { method: 'DELETE' })
-        .then(() => fetchSchedule());
+        .then(() => fetchSchedule(selectedTableId));
     }
   };
 
@@ -84,7 +151,8 @@ function Timetable() {
       day: parseInt(formData.day),
       time: `${formData.startTime} - ${formData.endTime}`,
       room: formData.room,
-      category: formData.category
+      category: effectiveCategory,
+      tableId: selectedTableId
     };
 
     const url = isEditing ? `/api/schedule/${currentEditId}` : '/api/schedule';
@@ -97,12 +165,12 @@ function Timetable() {
     })
     .then(res => res.json())
     .then(() => {
-      fetchSchedule();
+      fetchSchedule(selectedTableId);
       setIsModalOpen(false);
     });
   };
 
-  const days = ['週一', '週二', '週三', '週四', '週五'];
+  const days = ['週一', '週二', '週三', '週四', '週五', '週六', '週日'];
   const hours = Array.from({ length: endHour - startHour + 1 }, (_, i) => i + startHour);
 
   const calculateWeekProgress = () => {
@@ -143,8 +211,8 @@ function Timetable() {
 
   const getTodayIndex = () => {
     const day = new Date().getDay();
-    if (day === 0 || day === 6) return -1; 
-    return day - 1;
+    if (day === 0) return 6; // 週日
+    return day - 1; // 週一(1) -> 0 ... 週六(6) -> 5
   };
 
   return (
@@ -155,15 +223,36 @@ function Timetable() {
             <div className={styles.leftSide}>
               <h2 style={{ fontSize: '1.6rem', fontWeight: '800' }}>週課表地圖</h2>
               <div className={styles.weekBadge}>第 {weekInfo.current} / {weekInfo.total} 週</div>
+              <select
+                value={selectedTableId}
+                onChange={(e) => setSelectedTableId(e.target.value)}
+                style={{ borderRadius: '8px', padding: '4px 8px' }}
+              >
+                {tables.map(t => (
+                  <option key={t._id} value={t._id}>{t.name}</option>
+                ))}
+              </select>
+              <button className={styles.addTableBtn} onClick={handleCreateTable}>+ 新增課表</button>
+              {selectedTable && (
+                <button className={styles.deleteTableBtn} onClick={handleDeleteTable}>刪除課表</button>
+              )}
               <button className={styles.addBtn} onClick={openAddModal}>+ 新增課程</button>
             </div>
             
             <div className={styles.rightSide}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', marginRight: '10px' }}>
+                <input
+                  type="checkbox"
+                  checked={selectedTable?.showOnCalendar !== false}
+                  onChange={(e) => updateTableField('showOnCalendar', e.target.checked)}
+                />
+                顯示在行事曆/首頁/時間軸
+              </label>
               <div className={styles.dateInputGroup}>
                 <span className={styles.inputLabel}>學期：</span>
-                <input type="date" value={semesterStart} onChange={(e) => setSemesterStart(e.target.value)} />
+                <input type="date" value={semesterStart} onChange={(e) => updateTableField('semesterStart', e.target.value)} />
                 <span className={styles.separator}>~</span>
-                <input type="date" value={semesterEnd} onChange={(e) => setSemesterEnd(e.target.value)} />
+                <input type="date" value={semesterEnd} onChange={(e) => updateTableField('semesterEnd', e.target.value)} />
               </div>
             </div>
           </div>
@@ -192,15 +281,16 @@ function Timetable() {
                   </div>
                 ))}
 
-                {schedule.filter(item => item.day <= 5).map(item => (
-                  <div 
+                {schedule.filter(item => item.day >= 1 && item.day <= 7).map(item => (
+                  <div
                     key={item._id}
                     onClick={() => openEditModal(item)}
-                    className={`${styles.courseCard} ${styles[item.category]}`}
-                    style={{ 
+                    className={`${styles.courseCard} ${styles.catCourse}`}
+                    style={{
                       ...getTaskStyle(item.time),
-                      left: `calc(${(item.day - 1) * (100 / 5)}% + 3px)`,
-                      width: `calc(${100 / 5}% - 6px)`
+                      left: `calc(${(item.day - 1) * (100 / days.length)}% + 3px)`,
+                      width: `calc(${100 / days.length}% - 6px)`,
+                      ...categoryStyleVars(categories, item.category)
                     }}
                   >
                     <div className={styles.courseInner}>
@@ -235,15 +325,16 @@ function Timetable() {
                       <option value="3">週三</option>
                       <option value="4">週四</option>
                       <option value="5">週五</option>
+                      <option value="6">週六</option>
+                      <option value="7">週日</option>
                     </select>
                   </div>
                   <div className={styles.formGroup}>
                     <label>分類</label>
-                    <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                      <option value="work">工作/學科</option>
-                      <option value="important">重要/核心</option>
-                      <option value="relax">放鬆/通識</option>
-                      <option value="personal">個人/選修</option>
+                    <select value={effectiveCategory} onChange={e => setFormData({...formData, category: e.target.value})}>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.id}>{c.icon} {c.label}</option>
+                      ))}
                     </select>
                   </div>
                 </div>

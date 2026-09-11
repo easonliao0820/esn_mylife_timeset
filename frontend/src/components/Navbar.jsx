@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import styles from '../styles/components/Navbar.module.scss';
 import ttStyles from '../styles/pages/Timetable.module.scss'; // 借用一致的 Modal 樣式
+import { useCategories } from '../utils/categories';
 
 function Navbar() {
+  const categories = useCategories();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -15,6 +17,9 @@ function Navbar() {
     endTime: '11:00',
     category: 'work'
   });
+  const effectiveCategory = categories.some(c => c.id === formData.category)
+    ? formData.category
+    : (categories[0]?.id || formData.category);
 
   const handleAddTask = (e) => {
     e.preventDefault();
@@ -22,7 +27,7 @@ function Navbar() {
       title: formData.title,
       time: `${formData.startTime} - ${formData.endTime}`,
       date: formData.date,
-      category: formData.category,
+      category: effectiveCategory,
       status: '待處理'
     };
 
@@ -96,11 +101,10 @@ function Navbar() {
 
               <div className={ttStyles.formGroup}>
                 <label>分類</label>
-                <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                  <option value="work">工作/學習</option>
-                  <option value="important">緊急/重要</option>
-                  <option value="relax">放鬆/休息</option>
-                  <option value="personal">個人/生活</option>
+                <select value={effectiveCategory} onChange={e => setFormData({...formData, category: e.target.value})}>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>{c.icon} {c.label}</option>
+                  ))}
                 </select>
               </div>
 

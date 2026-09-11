@@ -4,7 +4,40 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
   margin-bottom: 1.5rem;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.catSettingsToggle {
+  background: white;
+  border: 1px solid v.$glass-border;
+  color: v.$dark-text;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover { background: v.$primary; color: white; }
+}
+
+.catSettingsCard {
+  margin-bottom: 1.2rem;
+}
+
+.catSettingsHint {
+  font-size: 0.78rem;
+  color: v.$text-secondary;
+  margin-bottom: 0.8rem;
 }
 
 .title {
@@ -59,7 +92,7 @@
 /* 總計卡片 */
 .summaryCard {
   text-align: center;
-  padding: 2rem !important;
+  padding: 0.5rem !important;
 }
 
 .summaryLabel {
@@ -69,10 +102,16 @@
 }
 
 .summaryHours {
-  font-size: 2.5rem;
+  font-size: 1.8rem;
   font-weight: 900;
   color: v.$primary;
   margin: 0;
+}
+
+.summaryTotal {
+  font-size: 1rem;
+  font-weight: 700;
+  color: v.$text-secondary;
 }
 
 .summaryCount {
@@ -83,7 +122,7 @@
 
 /* 長條圖卡片 */
 .barsCard {
-  padding: 1.5rem !important;
+  padding: 1.7rem !important;
 }
 
 .cardTitle {

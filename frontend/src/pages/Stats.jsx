@@ -1,14 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import CategoryEditor from '../components/CategoryEditor';
 import styles from '../styles/pages/Stats.module.scss';
 import dashStyles from '../styles/Dashboard.module.scss';
-
-const CATEGORIES = {
-  work:      { label: '工作/學習', color: '#17b890', bg: 'rgba(23,184,144,0.12)',  icon: '💼' },
-  important: { label: '緊急/重要', color: '#c9a22a', bg: 'rgba(226,232,176,0.5)', icon: '⚡' },
-  relax:     { label: '放鬆/休息', color: '#5ba3c9', bg: 'rgba(160,210,235,0.4)', icon: '🌿' },
-  personal:  { label: '個人/生活', color: '#7c6a53', bg: 'rgba(124,106,83,0.15)', icon: '👤' },
-};
+import { useCategories, tint } from '../utils/categories';
 
 function parseMinutes(timeStr) {
   if (!timeStr) return 0;
@@ -29,9 +24,11 @@ function formatHours(minutes) {
 const MONTH_NAMES = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
 
 function Stats() {
+  const categories = useCategories();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [stats, setStats] = useState({ work: 0, important: 0, relax: 0, personal: 0 });
+  const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
+  const [catSettingsOpen, setCatSettingsOpen] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -52,11 +49,13 @@ function Stats() {
         const semesterStart = new Date(localStorage.getItem('tt_semesterStart') || '2026-02-16');
         const semesterEnd = new Date(localStorage.getItem('tt_semesterEnd') || '2026-06-22');
 
-        const totals = { work: 0, important: 0, relax: 0, personal: 0 };
+        const totals = Object.fromEntries(categories.map(c => [c.id, 0]));
+        const fallbackId = categories[0]?.id;
+        const resolveCat = (cat) => (cat && cat in totals) ? cat : fallbackId;
 
         oneOffTasks.forEach(task => {
-          const cat = task.category || 'work';
-          if (cat in totals) totals[cat] += parseMinutes(task.time);
+          const cat = resolveCat(task.category);
+          if (cat) totals[cat] += parseMinutes(task.time);
         });
 
         for (let d = 1; d <= daysInMonth; d++) {
@@ -68,8 +67,8 @@ function Stats() {
             scheduleItems
               .filter(item => item.day === dow)
               .forEach(course => {
-                const cat = course.category || 'work';
-                if (cat in totals) totals[cat] += parseMinutes(course.time);
+                const cat = resolveCat(course.category);
+                if (cat) totals[cat] += parseMinutes(course.time);
               });
           }
         }
@@ -82,25 +81,40 @@ function Stats() {
       }
     };
     load();
-  }, [currentDate]);
+  }, [currentDate, categories]);
 
   const changeMonth = (offset) => {
     setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + offset, 1));
   };
 
   const totalMinutes = Object.values(stats).reduce((a, b) => a + b, 0);
+  const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+  const totalMonthMinutes = daysInMonth * 24 * 60;
 
   return (
     <Layout>
       <main className={dashStyles.dashboard}>
         <div className={styles.header}>
           <h1 className={styles.title}>時間統計</h1>
-          <div className={styles.monthNav}>
-            <button onClick={() => changeMonth(-1)}>←</button>
-            <span>{currentDate.getFullYear()}年 {MONTH_NAMES[currentDate.getMonth()]}</span>
-            <button onClick={() => changeMonth(1)}>→</button>
+          <div className={styles.headerRight}>
+            <div className={styles.monthNav}>
+              <button onClick={() => changeMonth(-1)}>←</button>
+              <span>{currentDate.getFullYear()}年 {MONTH_NAMES[currentDate.getMonth()]}</span>
+              <button onClick={() => changeMonth(1)}>→</button>
+            </div>
+            <button className={styles.catSettingsToggle} onClick={() => setCatSettingsOpen(o => !o)}>
+              🏷️ 標籤設定 {catSettingsOpen ? '▲' : '▼'}
+            </button>
           </div>
         </div>
+
+        {catSettingsOpen && (
+          <div className={`${dashStyles.glassCard} ${styles.catSettingsCard}`}>
+            <h3 className={styles.cardTitle}>標籤設定</h3>
+            <p className={styles.catSettingsHint}>在這裡新增、刪除、改名或改變顏色，會套用到首頁、課表、行事曆、備忘錄等所有地方。</p>
+            <CategoryEditor />
+          </div>
+        )}
 
         {loading ? (
           <div className={styles.loading}>載入中...</div>
@@ -108,7 +122,10 @@ function Stats() {
           <div className={styles.content}>
             <div className={`${dashStyles.glassCard} ${styles.summaryCard}`}>
               <p className={styles.summaryLabel}>本月合計</p>
-              <h2 className={styles.summaryHours}>{formatHours(totalMinutes)}</h2>
+              <h2 className={styles.summaryHours}>
+                {formatHours(totalMinutes)}
+                <span className={styles.summaryTotal}> / {formatHours(totalMonthMinutes)}</span>
+              </h2>
               <p className={styles.summaryCount}>
                 {Object.values(stats).filter(v => v > 0).length} 個分類有紀錄
               </p>
@@ -117,7 +134,7 @@ function Stats() {
             <div className={`${dashStyles.glassCard} ${styles.barsCard}`}>
               <h3 className={styles.cardTitle}>各分類時數比較</h3>
               <div className={styles.barsList}>
-                {Object.entries(CATEGORIES).map(([key, { label, color }]) => {
+                {categories.map(({ id: key, label, color }) => {
                   const min = stats[key] || 0;
                   const pct = totalMinutes > 0 ? (min / totalMinutes) * 100 : 0;
                   return (
@@ -143,7 +160,7 @@ function Stats() {
             </div>
 
             <div className={styles.catGrid}>
-              {Object.entries(CATEGORIES).map(([key, { label, color, bg, icon }]) => {
+              {categories.map(({ id: key, label, color, icon }) => {
                 const min = stats[key] || 0;
                 const pct = totalMinutes > 0 ? ((min / totalMinutes) * 100).toFixed(0) : 0;
                 return (
@@ -152,7 +169,7 @@ function Stats() {
                     className={`${dashStyles.glassCard} ${styles.catCard}`}
                     style={{ borderTop: `4px solid ${color}` }}
                   >
-                    <div className={styles.catIcon} style={{ background: bg, color }}>{icon}</div>
+                    <div className={styles.catIcon} style={{ background: tint(color, 15), color }}>{icon}</div>
                     <p className={styles.catLabel}>{label}</p>
                     <h3 className={styles.catHours} style={{ color }}>{formatHours(min)}</h3>
                     <p className={styles.catPct}>{pct}%</p>
