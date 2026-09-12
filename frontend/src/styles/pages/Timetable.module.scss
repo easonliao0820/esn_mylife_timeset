@@ -197,6 +197,36 @@
 
   .formRow { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 
+  .dayCheckboxRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .dayCheckbox {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: v.$text-secondary;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    input { margin: 0; }
+
+    &:hover { border-color: v.$primary; }
+  }
+
+  .dayCheckboxActive {
+    background: v.$primary;
+    border-color: v.$primary;
+    color: white;
+  }
+
   .modalActions {
     display: flex;
     gap: 1rem;

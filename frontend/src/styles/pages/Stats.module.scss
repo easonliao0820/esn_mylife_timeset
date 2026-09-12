@@ -16,6 +16,32 @@
   flex-wrap: wrap;
 }
 
+.viewModeToggle {
+  display: flex;
+  background: v.$bg-light;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+
+  button {
+    background: transparent;
+    border: none;
+    color: v.$text-secondary;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+}
+
+.viewModeActive {
+  background: white !important;
+  color: v.$primary !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
 .catSettingsToggle {
   background: white;
   border: 1px solid v.$glass-border;

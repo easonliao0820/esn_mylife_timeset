@@ -180,12 +180,12 @@
       font-size: 0.55rem;
       padding: 1px 4px;
       border-radius: 3px;
-      background: rgba(255, 255, 255, 0.5);
-      color: v.$accent;
+      background: color-mix(in srgb, var(--cat-color, #{v.$secondary}) 18%, white);
+      color: color-mix(in srgb, var(--cat-color, #{v.$secondary}) 65%, black);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      border-left: 2px solid v.$secondary;
+      border-left: 2px solid var(--cat-color, #{v.$secondary});
     }
 
     .moreCount {
@@ -286,6 +286,16 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-left: 4px solid transparent;
     opacity: 0.7; /* 預設半透明 */
+    touch-action: none; /* 讓拖曳手勢不會被瀏覽器當成捲動 */
+
+    &.vDraggable { cursor: grab; }
+
+    &.vDragging {
+      cursor: grabbing;
+      opacity: 0.95;
+      transition: none;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+    }
 
     .vTaskInner {
       display: flex;

@@ -7,7 +7,7 @@ import { useCategories, categoryStyleVars } from '../utils/categories';
 function Timetable() {
   const categories = useCategories();
   const startHour = 8;
-  const [endHour, setEndHour] = useState(22);
+  const [endHour, setEndHour] = useState(26);
   
   const [schedule, setSchedule] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,11 +27,20 @@ function Timetable() {
   const [formData, setFormData] = useState({
     name: '',
     day: 1,
+    days: [1],
     startTime: '09:00',
     endTime: '12:00',
     room: '',
     category: 'work'
   });
+
+  const toggleFormDay = (d) => {
+    setFormData(prev => {
+      const has = prev.days.includes(d);
+      const nextDays = has ? prev.days.filter(x => x !== d) : [...prev.days, d].sort((a, b) => a - b);
+      return { ...prev, days: nextDays.length ? nextDays : prev.days };
+    });
+  };
 
   const fetchSchedule = (tableId) => {
     if (!tableId) return;
@@ -116,7 +125,7 @@ function Timetable() {
   const openAddModal = () => {
     setIsEditing(false);
     setCurrentEditId(null);
-    setFormData({ name: '', day: 1, startTime: '09:00', endTime: '12:00', room: '', category: 'work' });
+    setFormData({ name: '', day: 1, days: [1], startTime: '09:00', endTime: '12:00', room: '', category: 'work' });
     setIsModalOpen(true);
   };
 
@@ -128,6 +137,7 @@ function Timetable() {
     setFormData({
       name: item.name,
       day: item.day,
+      days: [item.day],
       startTime: start.trim(),
       endTime: end.trim(),
       room: item.room || '',
@@ -146,25 +156,36 @@ function Timetable() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const itemData = {
+    const baseData = {
       name: formData.name,
-      day: parseInt(formData.day),
       time: `${formData.startTime} - ${formData.endTime}`,
       room: formData.room,
       category: effectiveCategory,
       tableId: selectedTableId
     };
 
-    const url = isEditing ? `/api/schedule/${currentEditId}` : '/api/schedule';
-    const method = isEditing ? 'PATCH' : 'POST';
+    if (isEditing) {
+      fetch(`/api/schedule/${currentEditId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...baseData, day: parseInt(formData.day) })
+      })
+      .then(res => res.json())
+      .then(() => {
+        fetchSchedule(selectedTableId);
+        setIsModalOpen(false);
+      });
+      return;
+    }
 
-    fetch(url, {
-      method: method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(itemData)
-    })
-    .then(res => res.json())
-    .then(() => {
+    // 新增時可一次勾選多天，同一時段橫向套用到每一天
+    Promise.all(formData.days.map(d =>
+      fetch('/api/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...baseData, day: d })
+      }).then(res => res.json())
+    )).then(() => {
       fetchSchedule(selectedTableId);
       setIsModalOpen(false);
     });
@@ -191,9 +212,17 @@ function Timetable() {
 
   const getTaskStyle = (timeStr) => {
     const [start, end] = timeStr.split(' - ');
-    const [startH, startM] = start.split(':').map(Number);
-    const [endH, endM] = end.split(':').map(Number);
-    
+    let [startH, startM] = start.split(':').map(Number);
+    let [endH, endM] = end.split(':').map(Number);
+
+    // 顯示範圍是「今天 startHour 點」到「隔天凌晨」，小於 startHour 的時刻一律視為隔天凌晨的延伸
+    if (startH < startHour) startH += 24;
+    if (endH < startHour) endH += 24;
+    // 結束時間仍比開始時間早（或相同），視為跨過午夜、再延伸一天
+    if (endH < startH || (endH === startH && endM <= startM)) {
+      endH += 24;
+    }
+
     // 如果課程超出當前設定的顯示範圍，進行裁切或隱藏
     const displayStartH = Math.max(startH, startHour);
     const displayEndH = Math.min(endH, endHour);
@@ -263,7 +292,7 @@ function Timetable() {
             <div className={styles.timeColumn}>
               <div className={styles.cornerLabel}>Time</div>
               {hours.map(hour => (
-                <div key={hour} className={styles.hourSlot}>{String(hour).padStart(2, '0')}:00</div>
+                <div key={hour} className={styles.hourSlot}>{String(hour % 24).padStart(2, '0')}:00</div>
               ))}
             </div>
 
@@ -316,19 +345,47 @@ function Timetable() {
                   <input type="text" placeholder="例如：品牌設計研究" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                 </div>
                 
-                <div className={styles.formRow}>
-                  <div className={styles.formGroup}>
-                    <label>上課日</label>
-                    <select value={formData.day} onChange={e => setFormData({...formData, day: parseInt(e.target.value)})}>
-                      <option value="1">週一</option>
-                      <option value="2">週二</option>
-                      <option value="3">週三</option>
-                      <option value="4">週四</option>
-                      <option value="5">週五</option>
-                      <option value="6">週六</option>
-                      <option value="7">週日</option>
-                    </select>
+                {isEditing ? (
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label>上課日</label>
+                      <select value={formData.day} onChange={e => setFormData({...formData, day: parseInt(e.target.value)})}>
+                        <option value="1">週一</option>
+                        <option value="2">週二</option>
+                        <option value="3">週三</option>
+                        <option value="4">週四</option>
+                        <option value="5">週五</option>
+                        <option value="6">週六</option>
+                        <option value="7">週日</option>
+                      </select>
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>分類</label>
+                      <select value={effectiveCategory} onChange={e => setFormData({...formData, category: e.target.value})}>
+                        {categories.map(c => (
+                          <option key={c.id} value={c.id}>{c.icon} {c.label}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
+                ) : (
+                  <div className={styles.formGroup}>
+                    <label>上課日（可複選，同時段橫向套用到多天）</label>
+                    <div className={styles.dayCheckboxRow}>
+                      {days.map((label, i) => {
+                        const d = i + 1;
+                        return (
+                          <label key={d} className={`${styles.dayCheckbox} ${formData.days.includes(d) ? styles.dayCheckboxActive : ''}`}>
+                            <input type="checkbox" checked={formData.days.includes(d)} onChange={() => toggleFormDay(d)} />
+                            {label}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {!isEditing && (
                   <div className={styles.formGroup}>
                     <label>分類</label>
                     <select value={effectiveCategory} onChange={e => setFormData({...formData, category: e.target.value})}>
@@ -337,7 +394,7 @@ function Timetable() {
                       ))}
                     </select>
                   </div>
-                </div>
+                )}
 
                 <div className={styles.formRow}>
                   <div className={styles.formGroup}>

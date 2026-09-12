@@ -3,7 +3,7 @@ import Layout from '../components/Layout';
 import styles from '../styles/pages/Calendar.module.scss';
 import dashStyles from '../styles/Dashboard.module.scss';
 import ttStyles from '../styles/pages/Timetable.module.scss'; // 借用 Modal 樣式
-import { fetchMergedTasks } from '../utils/dataService';
+import { fetchMergedTasks, confirmNoTimeConflicts, findTimeConflicts, resolveTaskConflictsOnServer, saveScheduleException } from '../utils/dataService';
 import { useCategories, categoryStyleVars } from '../utils/categories';
 
 function Calendar() {
@@ -12,9 +12,12 @@ function Calendar() {
   const [allTasks, setAllTasks] = useState([]);
   const [selectedDateInfo, setSelectedDateInfo] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [monthStats, setMonthStats] = useState({ work: 0, important: 0, relax: 0 });
+  const [monthStats, setMonthStats] = useState({});
   const [activeDrawerTaskId, setActiveDrawerTaskId] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [dragInfo, setDragInfo] = useState(null); // { id, dateStr, startClientY, originStartMin, durationMin, liveStartMin, moved }
+  const [courseMoveConfirm, setCourseMoveConfirm] = useState(null); // { courseId, dateStr, newTime, taskConflicts }
+  const PX_PER_MIN = 35 / 60;
   
   // 新增/編輯任務 Modal 狀態
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -57,15 +60,15 @@ function Calendar() {
     const results = await Promise.all(promises);
     const flatTasks = results.flat();
     setAllTasks(flatTasks);
-    
-    let w = 0, i = 0, r = 0;
+
+    const totals = Object.fromEntries(categories.map(c => [c.id, 0]));
+    const fallbackId = categories[0]?.id;
     flatTasks.forEach(t => {
       if (t.isMilestone) return;
-      if (t.category === 'important') i++;
-      else if (t.category === 'relax') r++;
-      else w++;
+      const cat = (t.category && t.category in totals) ? t.category : fallbackId;
+      if (cat) totals[cat] += 1;
     });
-    setMonthStats({ work: w, important: i, relax: r, total: flatTasks.filter(t => !t.isMilestone).length });
+    setMonthStats(totals);
 
     // 如果抽屜開著，同步更新抽屜內的任務
     if (selectedDateInfo) {
@@ -76,7 +79,7 @@ function Calendar() {
 
   useEffect(() => {
     loadMonthData();
-  }, [currentDate, refreshTrigger]);
+  }, [currentDate, refreshTrigger, categories]);
 
   useEffect(() => {
     const trigger = () => setRefreshTrigger(prev => prev + 1);
@@ -84,7 +87,7 @@ function Calendar() {
     return () => window.removeEventListener('task-added', trigger);
   }, []);
 
-  const handleSubmitTask = (e) => {
+  const handleSubmitTask = async (e) => {
     e.preventDefault();
     const taskData = {
       title: formData.title,
@@ -97,17 +100,23 @@ function Calendar() {
     const dateForTask = isMilestoneEdit
       ? editingTaskId.replace('milestone-', '')
       : selectedDateInfo.dateStr;
+    const isNewTask = !editingTaskId || isMilestoneEdit;
 
-    const request = editingTaskId && !isMilestoneEdit
-      ? fetch(`/api/tasks/${editingTaskId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(taskData)
-        })
-      : fetch('/api/tasks', {
+    if (isNewTask) {
+      const canProceed = await confirmNoTimeConflicts(dateForTask, taskData.time);
+      if (!canProceed) return;
+    }
+
+    const request = isNewTask
+      ? fetch('/api/tasks', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...taskData, date: dateForTask, status: '待處理' })
+        })
+      : fetch(`/api/tasks/${editingTaskId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(taskData)
         });
 
     request.then(res => res.json()).then(() => {
@@ -128,6 +137,101 @@ function Calendar() {
       })
       .catch(err => console.error('刪除任務失敗:', err));
     }
+  };
+
+  const minutesToHHMM = (mins) => `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
+
+  // 拖曳色塊來改時段：單次任務跟課表課程都可以拖，里程碑不行（虛擬項目，只能點擊展開）
+  const handleTaskDragStart = (e, task) => {
+    if (e.target.closest('button')) return; // 讓編輯/刪除按鈕的點擊正常運作，不搶走 pointer capture
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    if (task.isMilestone) return;
+
+    const [start, end] = task.time.split(' - ');
+    const [sH, sM] = start.split(':').map(Number);
+    const [eH, eM] = end.split(':').map(Number);
+    const originStartMin = sH * 60 + sM;
+    const durationMin = (eH * 60 + eM) - originStartMin;
+    setDragInfo({
+      id: task._id,
+      dateStr: selectedDateInfo.dateStr,
+      startClientY: e.clientY,
+      originStartMin,
+      durationMin,
+      liveStartMin: originStartMin,
+      moved: false
+    });
+  };
+
+  const handleTaskDragMove = (e) => {
+    if (!dragInfo) return;
+    const deltaY = e.clientY - dragInfo.startClientY;
+    if (Math.abs(deltaY) > 3) {
+      const deltaMin = Math.round((deltaY / PX_PER_MIN) / 5) * 5;
+      const maxStart = 1440 - dragInfo.durationMin;
+      const liveStartMin = Math.min(Math.max(dragInfo.originStartMin + deltaMin, 0), maxStart);
+      setDragInfo(prev => prev && ({ ...prev, liveStartMin, moved: true }));
+    }
+  };
+
+  const handleTaskDragEnd = async (e, task) => {
+    if (e.target.closest('button')) return; // 編輯/刪除按鈕自己的 onClick 會處理，這裡不要搶著切換展開狀態
+    const info = dragInfo;
+    setDragInfo(null);
+
+    // 沒有實際拖動（或這個色塊本來就不能拖），視為單純點擊，切換展開狀態
+    if (!info || info.id !== task._id || !info.moved) {
+      setActiveDrawerTaskId(prev => (prev === task._id ? null : task._id));
+      return;
+    }
+    if (info.liveStartMin === info.originStartMin) return;
+
+    const newTime = `${minutesToHHMM(info.liveStartMin)} - ${minutesToHHMM(info.liveStartMin + info.durationMin)}`;
+
+    if (task.isRecurring) {
+      // 課表課程：每週重複，搬動時要讓使用者選擇是套用到所有週次、還是只調整這一天
+      const courseId = task._id.replace('course-', '');
+      const taskConflicts = await findTimeConflicts(info.dateStr, newTime);
+      setCourseMoveConfirm({ courseId, dateStr: info.dateStr, newTime, taskConflicts });
+      return;
+    }
+
+    const canProceed = await confirmNoTimeConflicts(info.dateStr, newTime, info.id);
+    if (!canProceed) return;
+
+    fetch(`/api/tasks/${info.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ time: newTime })
+    })
+      .then(res => res.json())
+      .then(() => loadMonthData())
+      .catch(err => console.error('更新任務時間失敗:', err));
+  };
+
+  // 套用課程時間調整到「所有週次」（直接改課表本身）
+  const applyCourseMoveAllWeeks = () => {
+    const { courseId, dateStr, newTime } = courseMoveConfirm;
+    setCourseMoveConfirm(null);
+    fetch(`/api/schedule/${courseId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ time: newTime })
+    })
+      .then(() => resolveTaskConflictsOnServer(dateStr, newTime))
+      .then(() => loadMonthData())
+      .catch(err => console.error('更新課程時間失敗:', err));
+  };
+
+  // 只調整這一天的課程時間，其他週次維持原本時間
+  const applyCourseMoveThisDayOnly = () => {
+    const { courseId, dateStr, newTime } = courseMoveConfirm;
+    setCourseMoveConfirm(null);
+    saveScheduleException(courseId, dateStr, newTime)
+      .then(() => resolveTaskConflictsOnServer(dateStr, newTime))
+      .then(() => loadMonthData())
+      .catch(err => console.error('儲存單日例外失敗:', err));
   };
 
   const changeMonth = (offset) => {
@@ -176,18 +280,12 @@ function Calendar() {
             <div className={dashStyles.glassCard}>
               <h3>本月焦點</h3>
               <div className={styles.statsList}>
-                <div className={styles.statItem}>
-                  <span className={styles.dot} style={{ background: 'var(--primary)' }}></span>
-                  <div className={styles.statInfo}><label>工作任務</label><p>{monthStats.work} 項</p></div>
-                </div>
-                <div className={styles.statItem}>
-                  <span className={styles.dot} style={{ background: 'var(--leaf-yellow)' }}></span>
-                  <div className={styles.statInfo}><label>重要活動</label><p>{monthStats.important} 項</p></div>
-                </div>
-                <div className={styles.statItem}>
-                  <span className={styles.dot} style={{ background: 'var(--lake-blue)' }}></span>
-                  <div className={styles.statInfo}><label>放鬆心靈</label><p>{monthStats.relax} 項</p></div>
-                </div>
+                {categories.map(cat => (
+                  <div key={cat.id} className={styles.statItem}>
+                    <span className={styles.dot} style={{ background: cat.color }}></span>
+                    <div className={styles.statInfo}><label>{cat.icon} {cat.label}</label><p>{monthStats[cat.id] || 0} 項</p></div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -226,7 +324,11 @@ function Calendar() {
                       <div className={styles.dateNum}>{dateObj.day}</div>
                       <div className={styles.taskLabels}>
                         {dayTasks.slice(0, 2).map((task, i) => (
-                          <div key={i} className={`${styles.miniTask} ${task.isMilestone ? styles.miniTaskMilestone : ''}`}>{task.isRecurring && '🔖 '}{task.title}</div>
+                          <div
+                            key={i}
+                            className={`${styles.miniTask} ${task.isMilestone ? styles.miniTaskMilestone : ''}`}
+                            style={task.isMilestone ? {} : categoryStyleVars(categories, task.category)}
+                          >{task.isRecurring && '🔖 '}{task.title}</div>
                         ))}
                         {dayTasks.length > 2 && <div className={styles.moreCount}>+ {dayTasks.length - 2}</div>}
                       </div>
@@ -255,29 +357,41 @@ function Calendar() {
                   ))}
                   {selectedDateInfo?.tasks.map(task => {
                     const [start, end] = task.time.split(' - ');
-                    const t = (h, m) => (h * 60 + m) * (35 / 60);
                     const [sH, sM] = start.split(':').map(Number);
                     const [eH, eM] = end.split(':').map(Number);
-                    const top = t(sH, sM);
-                    const height = Math.max(t(eH, eM) - top, 26);
+                    const originStartMin = sH * 60 + sM;
+                    const durationMin = (eH * 60 + eM) - originStartMin;
+                    const isDraggable = !task.isMilestone;
+                    const isDragging = isDraggable && dragInfo?.id === task._id && dragInfo.moved;
+
+                    const startMin = isDragging ? dragInfo.liveStartMin : originStartMin;
+                    const top = startMin * PX_PER_MIN;
+                    const height = Math.max(durationMin * PX_PER_MIN, 26);
+                    const displayTime = isDragging
+                      ? `${minutesToHHMM(startMin)} - ${minutesToHHMM(startMin + durationMin)}`
+                      : task.time;
+
                     const isActive = activeDrawerTaskId === task._id;
                     const isMilestoneCat = task.category === 'milestone';
 
                     return (
                       <div
                         key={task._id}
-                        onClick={(e) => { e.stopPropagation(); setActiveDrawerTaskId(task._id === activeDrawerTaskId ? null : task._id); }}
-                        className={`${styles.vTaskBlock} ${isMilestoneCat ? styles.milestone : styles.catColor} ${isActive ? styles.vActive : ''}`}
+                        onClick={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => handleTaskDragStart(e, task)}
+                        onPointerMove={handleTaskDragMove}
+                        onPointerUp={(e) => handleTaskDragEnd(e, task)}
+                        className={`${styles.vTaskBlock} ${isMilestoneCat ? styles.milestone : styles.catColor} ${isActive ? styles.vActive : ''} ${isDraggable ? styles.vDraggable : ''} ${isDragging ? styles.vDragging : ''}`}
                         style={{
                           top: `${top}px`,
                           height: `${height}px`,
-                          zIndex: isActive ? 100 : 2,
+                          zIndex: isDragging ? 200 : (isActive ? 100 : 2),
                           ...(isMilestoneCat ? {} : categoryStyleVars(categories, task.category))
                         }}
                       >
                         <div className={styles.vTaskInner}>
                           <h4>{task.isRecurring && '🔖 '}{task.title}</h4>
-                          <span>{task.time}</span>
+                          <span>{displayTime}</span>
                           {!task.isRecurring && isActive && (<>
                             <button
                               className={styles.editTaskBtn}
@@ -334,6 +448,30 @@ function Calendar() {
                   <button type="submit" className={ttStyles.submitBtn}>{editingTaskId ? '儲存變更' : '加入行程'}</button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* 課程拖曳搬動時間：選擇只調整這一天、還是套用到所有週次 */}
+        {courseMoveConfirm && (
+          <div className={ttStyles.modalOverlay} onClick={() => setCourseMoveConfirm(null)}>
+            <div className={ttStyles.modalContent} onClick={e => e.stopPropagation()}>
+              <h3>搬動課程時間</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                這是每週重複的課程，新時段為 <strong>{courseMoveConfirm.newTime}</strong>。
+                要只調整 <strong>{courseMoveConfirm.dateStr}</strong> 這一天，還是套用到所有週次？
+              </p>
+              {courseMoveConfirm.taskConflicts.length > 0 && (
+                <p style={{ fontSize: '0.8rem', color: '#b85252', lineHeight: 1.6 }}>
+                  這個時段也跟以下行程衝突，繼續的話它們會自動調整時間：<br />
+                  {courseMoveConfirm.taskConflicts.map(c => `・${c.title}（${c.time}）`).join('　')}
+                </p>
+              )}
+              <div className={ttStyles.modalActions}>
+                <button type="button" className={ttStyles.cancelBtn} onClick={() => setCourseMoveConfirm(null)}>取消</button>
+                <button type="button" className={ttStyles.cancelBtn} onClick={applyCourseMoveThisDayOnly}>只調整這一天</button>
+                <button type="button" className={ttStyles.submitBtn} onClick={applyCourseMoveAllWeeks}>套用到所有週次</button>
+              </div>
             </div>
           </div>
         )}

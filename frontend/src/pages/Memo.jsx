@@ -50,8 +50,18 @@ function Memo() {
   };
 
   const handleDeleteMemo = (id) => {
+    if (!window.confirm('確定要刪除這則筆記嗎？')) return;
     fetch(`/api/memos/${id}`, { method: 'DELETE' })
       .then(() => fetchMemos());
+  };
+
+  const handleChangeMemoCategory = (id, newCategory) => {
+    setMemos(prev => prev.map(m => m._id === id ? { ...m, category: newCategory } : m));
+    fetch(`/api/memos/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ category: newCategory })
+    }).catch(err => console.error('更新筆記標籤失敗:', err));
   };
 
   return (
@@ -93,10 +103,21 @@ function Memo() {
             {loading ? (
               <p style={{ textAlign: 'center', gridColumn: '1/-1', color: 'var(--text-secondary)' }}>正在尋找筆記...</p>
             ) : memos.length > 0 ? (
-              memos.map(memo => (
+              memos.map(memo => {
+                const memoCategory = getCategory(categories, memo.category).id;
+                return (
                 <div key={memo._id} className={memoStyles.memoCard} style={categoryStyleVars(categories, memo.category)}>
                   <div className={memoStyles.memoHeader}>
-                    <span className={memoStyles.tag}>{getCategory(categories, memo.category).icon} {getCategory(categories, memo.category).label}</span>
+                    <select
+                      className={memoStyles.tag}
+                      value={memoCategory}
+                      onChange={(e) => handleChangeMemoCategory(memo._id, e.target.value)}
+                      title="更改標籤"
+                    >
+                      {categories.map(c => (
+                        <option key={c.id} value={c.id}>{c.icon} {c.label}</option>
+                      ))}
+                    </select>
                   </div>
                   <p className={memoStyles.content}>{memo.content}</p>
                   <div className={memoStyles.footer}>
@@ -109,7 +130,8 @@ function Memo() {
                     </button>
                   </div>
                 </div>
-              ))
+                );
+              })
             ) : (
               <p style={{ textAlign: 'center', gridColumn: '1/-1', color: 'var(--text-secondary)', marginTop: '3rem' }}>
                 目前沒有任何筆記。

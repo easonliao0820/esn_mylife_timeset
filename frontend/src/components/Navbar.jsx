@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import styles from '../styles/components/Navbar.module.scss';
 import ttStyles from '../styles/pages/Timetable.module.scss'; // 借用一致的 Modal 樣式
 import { useCategories } from '../utils/categories';
+import { confirmNoTimeConflicts } from '../utils/dataService';
 
 function Navbar() {
   const categories = useCategories();
@@ -21,7 +22,7 @@ function Navbar() {
     ? formData.category
     : (categories[0]?.id || formData.category);
 
-  const handleAddTask = (e) => {
+  const handleAddTask = async (e) => {
     e.preventDefault();
     const newTask = {
       title: formData.title,
@@ -30,6 +31,9 @@ function Navbar() {
       category: effectiveCategory,
       status: '待處理'
     };
+
+    const canProceed = await confirmNoTimeConflicts(newTask.date, newTask.time);
+    if (!canProceed) return;
 
     fetch('/api/tasks', {
       method: 'POST',

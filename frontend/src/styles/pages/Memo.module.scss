@@ -83,8 +83,6 @@
     transform: scale(1.02);
     background: white;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.06);
-    
-    .deleteBtn { opacity: 1; }
   }
 
   /* 根據標籤顏色動態上色 */
@@ -102,6 +100,12 @@
       background: color-mix(in srgb, var(--cat-color, #{v.$primary}) 15%, transparent);
       color: color-mix(in srgb, var(--cat-color, #{v.$primary}) 65%, black);
       font-weight: 600;
+      border: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+
+      &:hover, &:focus { outline: none; background: color-mix(in srgb, var(--cat-color, #{v.$primary}) 25%, transparent); }
     }
   }
 
@@ -131,10 +135,10 @@
       color: #ef4444;
       font-size: 0.75rem;
       cursor: pointer;
-      opacity: 0;
+      opacity: 0.6;
       transition: opacity 0.2s ease;
-      
-      &:hover { text-decoration: underline; }
+
+      &:hover { opacity: 1; text-decoration: underline; }
     }
   }
 }

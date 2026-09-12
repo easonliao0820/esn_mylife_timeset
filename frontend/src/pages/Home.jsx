@@ -4,7 +4,7 @@ import homeStyles from '../styles/pages/Home.module.scss';
 import dashStyles from '../styles/Dashboard.module.scss';
 import timelineStyles from '../styles/pages/Timeline.module.scss';
 import ttStyles from '../styles/pages/Timetable.module.scss'; // 借用 Modal 樣式
-import { fetchMergedTasks } from '../utils/dataService';
+import { fetchMergedTasks, confirmNoTimeConflicts } from '../utils/dataService';
 import { useCategories, getCategory, categoryStyleVars } from '../utils/categories';
 
 function Home() {
@@ -25,20 +25,32 @@ function Home() {
     category: 'work'
   });
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [tomorrowTasks, setTomorrowTasks] = useState([]);
 
   const scrollAreaRef = useRef(null);
   const pixelsPerHour = 100;
 
+  const formatDateStr = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  const sortByTime = (list) => [...list]
+    .filter(t => t.time && t.time.includes('-'))
+    .sort((a, b) => a.time.split(' - ')[0].localeCompare(b.time.split(' - ')[0]));
+
   const loadData = () => {
     const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    fetchMergedTasks(todayStr)
-      .then(mergedData => {
-        setTasks(mergedData);
-        const { packed, count } = packTasks(mergedData);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const todayStr = formatDateStr(today);
+    const tomorrowStr = formatDateStr(tomorrow);
+
+    Promise.all([fetchMergedTasks(todayStr), fetchMergedTasks(tomorrowStr)])
+      .then(([todayData, tomorrowData]) => {
+        setTasks(todayData);
+        const { packed, count } = packTasks(todayData);
         setPackedTasks(packed);
         setLaneCount(count);
-        calculateStats(mergedData);
+        calculateStats(todayData);
+        setTomorrowTasks(sortByTime(tomorrowData));
         setLoading(false);
       })
       .catch(err => {
@@ -90,10 +102,9 @@ function Home() {
   }, [loading]);
 
   // 提交新任務
-  const handleAddTask = (e) => {
+  const handleAddTask = async (e) => {
     e.preventDefault();
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const todayStr = formatDateStr(new Date());
     const newTask = {
       title: formData.title,
       time: `${formData.startTime} - ${formData.endTime}`,
@@ -101,6 +112,9 @@ function Home() {
       category: effectiveCategory,
       status: '待處理'
     };
+
+    const canProceed = await confirmNoTimeConflicts(todayStr, newTask.time);
+    if (!canProceed) return;
 
     fetch('/api/tasks', {
       method: 'POST',
@@ -212,9 +226,7 @@ function Home() {
     <Layout>
       <header className={homeStyles.hero}>
         <h1>精準掌握每一刻</h1>
-        <p>清新的森林系風格，讓你的規劃更有靈感。</p>
       </header>
-
       <main className={dashStyles.dashboard}>
         <div className={homeStyles.statsSection}>
           <div className={`${dashStyles.glassCard} ${homeStyles.statCard}`}>
@@ -224,6 +236,46 @@ function Home() {
           <div className={`${dashStyles.glassCard} ${homeStyles.statCard}`}>
             <span className={homeStyles.statLabel}>尚未安排時段</span>
             <div className={`${homeStyles.statValue} ${homeStyles.unscheduled}`}>{stats.unscheduled}</div>
+          </div>
+        </div>
+
+        <div className={`${dashStyles.glassCard} ${homeStyles.upcomingSection}`} style={{ marginBottom: '1.5rem' }}>
+          <div className={dashStyles.cardHeader}>
+            <h2>📅 今天 / 明天</h2>
+          </div>
+          <div className={homeStyles.upcomingColumns}>
+            <div className={homeStyles.upcomingColumn}>
+              <h4 className={homeStyles.upcomingColumnTitle}>
+                今天・{new Date().toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric', weekday: 'short' })}
+              </h4>
+              {packedTasks.length === 0 ? (
+                <p className={homeStyles.upcomingEmpty}>今天沒有安排任何事項</p>
+              ) : (
+                packedTasks.map(task => (
+                  <div key={task._id} className={homeStyles.upcomingItem} style={categoryStyleVars(categories, task.category)}>
+                    <span className={homeStyles.upcomingDot} />
+                    <span className={homeStyles.upcomingTime}>{task.time}</span>
+                    <span className={homeStyles.upcomingTitle}>{task.isRecurring && '🔖 '}{task.title}</span>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className={homeStyles.upcomingColumn}>
+              <h4 className={homeStyles.upcomingColumnTitle}>
+                明天・{(() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric', weekday: 'short' }); })()}
+              </h4>
+              {tomorrowTasks.length === 0 ? (
+                <p className={homeStyles.upcomingEmpty}>明天目前沒有安排事項</p>
+              ) : (
+                tomorrowTasks.map(task => (
+                  <div key={task._id} className={homeStyles.upcomingItem} style={categoryStyleVars(categories, task.category)}>
+                    <span className={homeStyles.upcomingDot} />
+                    <span className={homeStyles.upcomingTime}>{task.time}</span>
+                    <span className={homeStyles.upcomingTitle}>{task.isRecurring && '🔖 '}{task.title}</span>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
 
